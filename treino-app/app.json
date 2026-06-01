@@ -40,7 +40,13 @@
           }
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O app usa suas fotos para registrar seu progresso físico."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

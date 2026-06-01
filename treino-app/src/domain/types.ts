@@ -9,6 +9,7 @@ export type SetRow = Tables['sets']['Row'];
 export type PersonalRecordRow = Tables['personal_records']['Row'];
 export type CardioSessionRow = Tables['cardio_sessions']['Row'];
 export type BodyMetricRow = Tables['body_metrics']['Row'];
+export type ProgressPhotoRow = Tables['progress_photos']['Row'];
 
 export type SetType =
   | 'normal'

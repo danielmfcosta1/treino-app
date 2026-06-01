@@ -15,6 +15,7 @@ import { use$ } from '@legendapp/state/react';
 
 import { bodyMetrics$, cardioSessions$, exercises$ } from '@/src/state/store';
 import { newId } from '@/src/lib/ids';
+import { ProgressPhotos } from '@/src/components/ProgressPhotos';
 import type { BodyMetricRow, CardioSessionRow } from '@/src/domain/types';
 
 const SCREEN_W = Dimensions.get('window').width;
@@ -144,6 +145,8 @@ export default function BodyScreen() {
             ))
           )}
         </View>
+        {/* Fotos de progresso */}
+        <ProgressPhotos />
       </ScrollView>
 
       <MetricModal visible={showMetric} onClose={() => setShowMetric(false)} />
