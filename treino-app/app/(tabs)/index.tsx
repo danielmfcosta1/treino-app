@@ -71,8 +71,13 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safe}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.greeting}>Olá, {firstName} 👋</Text>
-          <Text style={styles.sub}>Pronto para treinar?</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.greeting}>Olá, {firstName} 👋</Text>
+            <Text style={styles.sub}>Pronto para treinar?</Text>
+          </View>
+          <TouchableOpacity style={styles.gear} onPress={() => router.push('/settings')}>
+            <Text style={styles.gearText}>⚙️</Text>
+          </TouchableOpacity>
         </View>
 
         {activeId ? (
@@ -138,7 +143,9 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#0f0f0f' },
   scroll: { flex: 1 },
   content: { padding: 20, paddingBottom: 40, gap: 20 },
-  header: { marginBottom: 4 },
+  header: { marginBottom: 4, flexDirection: 'row', alignItems: 'center' },
+  gear: { padding: 8 },
+  gearText: { fontSize: 22 },
   greeting: { fontSize: 24, fontWeight: '700', color: '#fff' },
   sub: { fontSize: 15, color: '#888', marginTop: 4 },
   primaryBtn: { backgroundColor: '#4f9cf9', borderRadius: 16, padding: 20, alignItems: 'center' },

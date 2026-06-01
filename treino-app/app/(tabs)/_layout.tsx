@@ -36,6 +36,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="body"
+        options={{
+          title: 'Corpo',
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="figure.walk" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="progress"
         options={{
           title: 'Progresso',

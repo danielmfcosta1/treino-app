@@ -52,6 +52,10 @@ export default function RootLayout() {
             headerStyle: { backgroundColor: colorScheme === 'dark' ? '#151718' : '#fff' },
           }}
         />
+        <Stack.Screen
+          name="settings"
+          options={{ presentation: 'modal', headerShown: false }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

@@ -1,0 +1,179 @@
+import { useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { use$ } from '@legendapp/state/react';
+
+import { signOut, session$ } from '@/src/state/auth';
+import { defaultRestSeconds$ } from '@/src/state/restTimer';
+import {
+  workouts$,
+  workoutExercises$,
+  sets$,
+  exercises$,
+  cardioSessions$,
+  bodyMetrics$,
+} from '@/src/state/store';
+import {
+  backupToJSON,
+  buildBackup,
+  buildSetsCSV,
+  flattenSets,
+  type BackupData,
+} from '@/src/lib/exportData';
+import { shareTextFile } from '@/src/lib/share';
+
+const REST_PRESETS = [60, 90, 120, 180];
+
+export default function SettingsScreen() {
+  const session = use$(session$);
+  const restSecs = use$(defaultRestSeconds$);
+  const [busy, setBusy] = useState(false);
+
+  const activeArr = <T extends { deleted: boolean }>(m: Record<string, T | undefined>): T[] =>
+    Object.values(m).filter((x): x is T => !!x && !x.deleted);
+
+  const exportJSON = async () => {
+    setBusy(true);
+    try {
+      const data: BackupData = {
+        exercises: activeArr(exercises$.get() ?? {}),
+        workouts: activeArr(workouts$.get() ?? {}),
+        workoutExercises: activeArr(workoutExercises$.get() ?? {}),
+        sets: activeArr(sets$.get() ?? {}),
+        cardioSessions: activeArr(cardioSessions$.get() ?? {}),
+        bodyMetrics: activeArr(bodyMetrics$.get() ?? {}),
+      };
+      const json = backupToJSON(buildBackup(data, new Date().toISOString()));
+      const ok = await shareTextFile('treino-backup.json', json, 'application/json');
+      if (!ok) Alert.alert('Indisponível', 'Compartilhamento não disponível neste dispositivo.');
+    } catch (e) {
+      Alert.alert('Erro', String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const exportCSV = async () => {
+    setBusy(true);
+    try {
+      const flat = flattenSets(
+        workouts$.get() ?? {},
+        workoutExercises$.get() ?? {},
+        sets$.get() ?? {},
+        exercises$.get() ?? {},
+      );
+      const csv = buildSetsCSV(flat);
+      const ok = await shareTextFile('treino-series.csv', csv, 'text/csv');
+      if (!ok) Alert.alert('Indisponível', 'Compartilhamento não disponível neste dispositivo.');
+    } catch (e) {
+      Alert.alert('Erro', String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmSignOut = () => {
+    Alert.alert('Sair', 'Deseja sair da sua conta?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Sair', style: 'destructive', onPress: () => signOut() },
+    ]);
+  };
+
+  return (
+    <SafeAreaView style={s.safe}>
+      <ScrollView contentContainerStyle={s.content}>
+        <Text style={s.title}>Configurações</Text>
+
+        {/* Conta */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Conta</Text>
+          <View style={s.card}>
+            <Text style={s.label}>Logado como</Text>
+            <Text style={s.value}>{session?.user?.email ?? '—'}</Text>
+          </View>
+        </View>
+
+        {/* Descanso padrão */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Descanso padrão entre séries</Text>
+          <View style={s.presetRow}>
+            {REST_PRESETS.map((p) => (
+              <TouchableOpacity
+                key={p}
+                style={[s.preset, restSecs === p && s.presetActive]}
+                onPress={() => defaultRestSeconds$.set(p)}>
+                <Text style={[s.presetText, restSecs === p && s.presetTextActive]}>
+                  {p < 120 ? `${p}s` : `${p / 60}min`}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Backup */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Backup / Exportar</Text>
+          <TouchableOpacity style={s.actionBtn} onPress={exportJSON} disabled={busy}>
+            <Text style={s.actionText}>📦 Exportar tudo (JSON)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.actionBtn} onPress={exportCSV} disabled={busy}>
+            <Text style={s.actionText}>📊 Exportar séries (CSV)</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Sair */}
+        <TouchableOpacity style={s.signOut} onPress={confirmSignOut}>
+          <Text style={s.signOutText}>Sair da conta</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#0f0f0f' },
+  content: { padding: 20, gap: 24, paddingBottom: 40 },
+  title: { fontSize: 28, fontWeight: '700', color: '#fff' },
+  section: { gap: 10 },
+  sectionTitle: { fontSize: 14, fontWeight: '600', color: '#888', textTransform: 'uppercase', letterSpacing: 0.5 },
+  card: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+  },
+  label: { color: '#666', fontSize: 12 },
+  value: { color: '#fff', fontSize: 16, marginTop: 4 },
+  presetRow: { flexDirection: 'row', gap: 10 },
+  preset: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+  },
+  presetActive: { backgroundColor: '#4f9cf9', borderColor: '#4f9cf9' },
+  presetText: { color: '#888', fontSize: 15, fontWeight: '600' },
+  presetTextActive: { color: '#fff' },
+  actionBtn: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+  },
+  actionText: { color: '#4f9cf9', fontSize: 15, fontWeight: '600' },
+  signOut: {
+    backgroundColor: '#2a1515',
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#4a2020',
+    marginTop: 8,
+  },
+  signOutText: { color: '#ff6b6b', fontSize: 16, fontWeight: '600' },
+});
