@@ -46,7 +46,8 @@
         {
           "photosPermission": "O app usa suas fotos para registrar seu progresso físico."
         }
-      ]
+      ],
+      "./plugins/withLocalNotificationsOnly"
     ],
     "experiments": {
       "typedRoutes": true,

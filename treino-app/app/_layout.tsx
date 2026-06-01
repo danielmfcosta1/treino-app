@@ -1,31 +1,17 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
 import { use$ } from '@legendapp/state/react';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { authReady$, session$ } from '@/src/state/auth';
 
-function AuthGate() {
-  const ready = use$(authReady$);
-  const session = use$(session$);
-  const segments = useSegments();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!ready) return;
-    const inAuth = segments[0] === '(auth)';
-    if (!session && !inAuth) {
-      router.replace('/(auth)/login');
-    } else if (session && inAuth) {
-      router.replace('/(tabs)');
-    }
-  }, [session, ready, segments, router]);
-
-  return null;
-}
+// Segura a splash até sabermos se há sessão — evita piscar a tela de login
+// para quem já está logado.
+SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -33,29 +19,40 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const ready = use$(authReady$);
+  const session = use$(session$);
+
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync();
+  }, [ready]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AuthGate />
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="workout/[id]"
-          options={{ presentation: 'fullScreenModal', headerShown: false }}
-        />
-        <Stack.Screen
-          name="exercises/picker"
-          options={{
-            presentation: 'modal',
-            title: 'Escolher exercício',
-            headerStyle: { backgroundColor: colorScheme === 'dark' ? '#151718' : '#fff' },
-          }}
-        />
-        <Stack.Screen
-          name="settings"
-          options={{ presentation: 'modal', headerShown: false }}
-        />
+        {/* Rotas autenticadas: visíveis só com sessão. O expo-router troca o
+            grupo de forma declarativa quando `session` muda (login/logout),
+            sem navegação imperativa — evita o crash "navigate before mounting". */}
+        <Stack.Protected guard={!!session}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="workout/[id]"
+            options={{ presentation: 'fullScreenModal', headerShown: false }}
+          />
+          <Stack.Screen
+            name="exercises/picker"
+            options={{
+              presentation: 'modal',
+              title: 'Escolher exercício',
+              headerStyle: { backgroundColor: colorScheme === 'dark' ? '#151718' : '#fff' },
+            }}
+          />
+          <Stack.Screen name="settings" options={{ presentation: 'modal', headerShown: false }} />
+        </Stack.Protected>
+
+        {/* Rota de login: visível só sem sessão. */}
+        <Stack.Protected guard={!session}>
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        </Stack.Protected>
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
