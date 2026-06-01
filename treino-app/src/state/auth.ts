@@ -16,10 +16,16 @@ supabase.auth.onAuthStateChange((event, session) => {
   authReady$.set(true);
 
   // Gotcha #453: o pull inicial pode disparar antes da sessão existir. Ao
-  // logar, re-acionamos get() dos observables sincronizados pra puxar do
-  // servidor com o user_id já resolvido pelo RLS.
+  // logar, re-acionamos sync() de todos os observables para puxar do servidor
+  // com o user_id já resolvido pelo RLS.
   if (event === 'SIGNED_IN') {
     allStores.forEach((store$) => syncState(store$).sync());
+
+    // Seed idempotente: popula o catálogo na primeira vez.
+    // Importação lazy evita ciclo: seedExercises → store → supabase → auth.
+    import('../seed/seedExercises').then(({ seedExercises }) => {
+      seedExercises();
+    });
   }
 });
 
