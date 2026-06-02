@@ -1,27 +1,32 @@
 import { exercises$ } from '../state/store';
+import { supabase } from '../state/supabase';
 import { newId } from '../lib/ids';
 import { selectMissingExercises } from './selection';
-import type { ExerciseRow } from '../domain/types';
+import { EXERCISE_SEED } from './exercises.seed';
 
 export { normalizeName, selectMissingExercises } from './selection';
 
 /**
- * Popula o catálogo no estado local (que sincroniza pro Supabase). Idempotente:
- * roda quantas vezes quiser que só insere o que falta. Deve rodar após o login.
- * Retorna quantos exercícios foram inseridos.
+ * Popula o catálogo APENAS se ele estiver vazio no servidor.
+ *
+ * Antes, isto rodava no SIGNED_IN lendo o store local — que pode ainda não ter
+ * sincronizado os exercícios existentes, fazendo o seed achar "vazio" e
+ * reinserir tudo (bug dos 37 duplicados). Agora consultamos o servidor
+ * (autoritativo) e só semeamos se realmente não houver nada. Idempotente e
+ * à prova de corrida de sincronização.
  */
-export function seedExercises(): number {
-  const current = exercises$.get() ?? {};
-  const existingNames = Object.values(current)
-    .filter((e): e is ExerciseRow => !!e && !e.deleted)
-    .map((e) => e.name);
+export async function seedExercises(): Promise<number> {
+  const { count, error } = await supabase
+    .from('exercises')
+    .select('id', { count: 'exact', head: true })
+    .eq('deleted', false);
 
-  const missing = selectMissingExercises(existingNames);
+  if (error) return 0; // sem rede / falha: não arrisca duplicar
+  if ((count ?? 0) > 0) return 0; // catálogo já existe
 
+  const missing = selectMissingExercises([], EXERCISE_SEED);
   for (const ex of missing) {
     const id = newId();
-    // user_id/created_at/updated_at/deleted são preenchidos pelo
-    // default/trigger no Postgres; o cliente só manda os campos de conteúdo.
     exercises$[id].set({
       id,
       name: ex.name,
@@ -34,6 +39,5 @@ export function seedExercises(): number {
       is_custom: false,
     } as never);
   }
-
   return missing.length;
 }

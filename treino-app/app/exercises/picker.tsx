@@ -13,6 +13,7 @@ import { use$ } from '@legendapp/state/react';
 
 import { exercises$, workoutExercises$ } from '@/src/state/store';
 import { newId } from '@/src/lib/ids';
+import { normalizeName } from '@/src/seed/selection';
 
 const MUSCLE_LABELS: Record<string, string> = {
   chest: 'Peito', lats: 'Costas', 'middle back': 'Costas méd.', 'lower back': 'Lombar',
@@ -27,9 +28,18 @@ export default function ExercisePickerScreen() {
   const exercisesMap = use$(exercises$);
   const [query, setQuery] = useState('');
 
+  // Dedup defensivo por nome normalizado (caso o sync local ainda não tenha
+  // removido duplicados soft-deletados no servidor).
+  const seen = new Set<string>();
   const allExercises = Object.values(exercisesMap ?? {})
     .filter((e) => !e.deleted)
-    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+    .filter((e) => {
+      const key = normalizeName(e.name);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 
   const filtered = query.trim()
     ? allExercises.filter(

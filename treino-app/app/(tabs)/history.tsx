@@ -92,13 +92,21 @@ export default function HistoryScreen() {
                     if (setList.length === 0) return null;
                     return (
                       <View key={wx.id} style={styles.exBlock}>
-                        <Text style={styles.exName}>{exName(wx.exercise_id)}</Text>
+                        <Text style={styles.exName}>
+                          {exName(wx.exercise_id)}
+                          {wx.equipment ? <Text style={styles.equip}>  · {wx.equipment}</Text> : null}
+                        </Text>
                         {setList.map((s, i) => (
-                          <Text key={s.id} style={styles.setLine}>
-                            {i + 1}. {s.weight ? `${s.weight}kg` : '—'} × {s.reps ?? '?'} reps
-                            {s.rpe ? `  RPE ${s.rpe}` : ''}
-                            {s.rir != null ? `  RIR ${s.rir}` : ''}
-                          </Text>
+                          <View key={s.id}>
+                            <Text style={styles.setLine}>
+                              {i + 1}. {s.weight ? `${s.weight}kg` : '—'} × {s.reps ?? '?'} reps
+                              {s.rpe ? `  RPE ${s.rpe}` : ''}
+                              {s.rir != null ? `  RIR ${s.rir}` : ''}
+                            </Text>
+                            {s.notes && s.notes.trim() ? (
+                              <Text style={styles.setNote}>✎ {s.notes.trim()}</Text>
+                            ) : null}
+                          </View>
                         ))}
                       </View>
                     );
@@ -125,6 +133,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#2a2a2a',
   },
+  equip: { color: '#7fb3e0', fontSize: 12, fontWeight: '400' },
+  setNote: { color: '#caa45a', fontSize: 12, paddingLeft: 18, marginTop: 1, marginBottom: 4 },
   cardTop: { flexDirection: 'row', alignItems: 'center' },
   cardName: { fontSize: 15, fontWeight: '600', color: '#fff' },
   cardDate: { fontSize: 12, color: '#666', marginTop: 2, textTransform: 'capitalize' },

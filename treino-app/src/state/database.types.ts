@@ -425,6 +425,7 @@ export type Database = {
           deleted: boolean
           id: string
           is_completed: boolean
+          notes: string | null
           position: number
           reps: number | null
           rir: number | null
@@ -440,6 +441,7 @@ export type Database = {
           deleted?: boolean
           id?: string
           is_completed?: boolean
+          notes?: string | null
           position?: number
           reps?: number | null
           rir?: number | null
@@ -455,6 +457,7 @@ export type Database = {
           deleted?: boolean
           id?: string
           is_completed?: boolean
+          notes?: string | null
           position?: number
           reps?: number | null
           rir?: number | null
@@ -483,6 +486,7 @@ export type Database = {
           id: string
           notes: string | null
           position: number
+          equipment: string | null
           superset_group: number | null
           updated_at: string
           user_id: string
@@ -495,6 +499,7 @@ export type Database = {
           id?: string
           notes?: string | null
           position?: number
+          equipment?: string | null
           superset_group?: number | null
           updated_at?: string
           user_id?: string
@@ -507,6 +512,7 @@ export type Database = {
           id?: string
           notes?: string | null
           position?: number
+          equipment?: string | null
           superset_group?: number | null
           updated_at?: string
           user_id?: string

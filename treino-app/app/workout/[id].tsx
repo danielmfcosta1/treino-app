@@ -26,6 +26,17 @@ import type { SetRow, WorkoutExerciseRow, WorkoutRow } from '@/src/domain/types'
 
 type RowMap<T> = Record<string, T | undefined>;
 
+const EQUIPMENT_OPTIONS = [
+  'Barra',
+  'Halteres',
+  'Máquina',
+  'Smith',
+  'Cabo',
+  'Polia',
+  'Peso corporal',
+  'Kettlebell',
+];
+
 // ---------- helpers ----------
 
 function useElapsed(startedAt: string | null) {
@@ -65,57 +76,74 @@ interface SetRowProps {
   index: number;
   onUpdate: (patch: Partial<SetRow>) => void;
   onComplete: () => void;
+  onRemove: () => void;
 }
 
-function SetRowItem({ set, index, onUpdate, onComplete }: SetRowProps) {
+function SetRowItem({ set, index, onUpdate, onComplete, onRemove }: SetRowProps) {
   const done = set.is_completed;
+  const [noteOpen, setNoteOpen] = useState(false);
+  const hasNote = !!(set.notes && set.notes.trim());
+
   return (
-    <View style={[srs.row, done && srs.rowDone]}>
-      <Text style={srs.num}>{index + 1}</Text>
-      <TextInput
-        style={[srs.input, srs.weightInput]}
-        value={set.weight != null ? String(set.weight) : ''}
-        onChangeText={(v) => onUpdate({ weight: parseNum(v) })}
-        keyboardType="decimal-pad"
-        placeholder="kg"
-        placeholderTextColor="#444"
-        editable={!done}
-      />
-      <Text style={srs.x}>×</Text>
-      <TextInput
-        style={[srs.input, srs.repsInput]}
-        value={set.reps != null ? String(set.reps) : ''}
-        onChangeText={(v) => onUpdate({ reps: parseNum(v) })}
-        keyboardType="number-pad"
-        placeholder="reps"
-        placeholderTextColor="#444"
-        editable={!done}
-      />
-      <TextInput
-        style={[srs.input, srs.rpeInput]}
-        value={set.rpe != null ? String(set.rpe) : ''}
-        onChangeText={(v) => onUpdate({ rpe: parseNum(v) })}
-        keyboardType="decimal-pad"
-        placeholder="RPE"
-        placeholderTextColor="#333"
-        editable={!done}
-      />
-      <TouchableOpacity
-        style={[srs.check, done && srs.checkDone]}
-        onPress={() => {
-          if (!done) onComplete();
-          else onUpdate({ is_completed: false });
-        }}>
-        <Text style={srs.checkText}>{done ? '✓' : ''}</Text>
-      </TouchableOpacity>
+    <View>
+      <View style={[srs.row, done && srs.rowDone]}>
+        <Text style={srs.num}>{index + 1}</Text>
+        <TextInput
+          style={[srs.input, srs.weightInput]}
+          value={set.weight != null ? String(set.weight) : ''}
+          onChangeText={(v) => onUpdate({ weight: parseNum(v) })}
+          keyboardType="decimal-pad"
+          placeholder="kg"
+          placeholderTextColor="#444"
+        />
+        <Text style={srs.x}>×</Text>
+        <TextInput
+          style={[srs.input, srs.repsInput]}
+          value={set.reps != null ? String(set.reps) : ''}
+          onChangeText={(v) => onUpdate({ reps: parseNum(v) })}
+          keyboardType="number-pad"
+          placeholder="reps"
+          placeholderTextColor="#444"
+        />
+        <TextInput
+          style={[srs.input, srs.rpeInput]}
+          value={set.rpe != null ? String(set.rpe) : ''}
+          onChangeText={(v) => onUpdate({ rpe: parseNum(v) })}
+          keyboardType="decimal-pad"
+          placeholder="RPE"
+          placeholderTextColor="#333"
+        />
+        <TouchableOpacity
+          style={[srs.noteBtn, (hasNote || noteOpen) && srs.noteBtnActive]}
+          onPress={() => setNoteOpen((o) => !o)}>
+          <Text style={[srs.noteIcon, (hasNote || noteOpen) && srs.noteIconActive]}>✎</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[srs.check, done && srs.checkDone]}
+          onLongPress={onRemove}
+          onPress={() => onComplete()}>
+          <Text style={srs.checkText}>{done ? '✓' : ''}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {(noteOpen || hasNote) && (
+        <TextInput
+          style={srs.noteInput}
+          value={set.notes ?? ''}
+          onChangeText={(v) => onUpdate({ notes: v })}
+          placeholder="Obs.: improvisei, dropset, sem aparelho…"
+          placeholderTextColor="#555"
+          multiline
+        />
+      )}
     </View>
   );
 }
 
 const srs = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 },
-  rowDone: { opacity: 0.5 },
-  num: { width: 20, color: '#555', fontSize: 13, textAlign: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6 },
+  rowDone: { opacity: 0.55 },
+  num: { width: 18, color: '#555', fontSize: 13, textAlign: 'center' },
   input: {
     backgroundColor: '#222',
     borderRadius: 8,
@@ -126,14 +154,24 @@ const srs = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#2a2a2a',
   },
-  weightInput: { width: 64 },
-  repsInput: { width: 52 },
-  rpeInput: { width: 52 },
+  weightInput: { width: 58 },
+  repsInput: { width: 48 },
+  rpeInput: { width: 46 },
   x: { color: '#444', fontSize: 14 },
-  check: {
-    width: 36,
+  noteBtn: {
+    width: 30,
     height: 36,
-    borderRadius: 18,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noteBtnActive: {},
+  noteIcon: { color: '#555', fontSize: 16 },
+  noteIconActive: { color: '#e0a93f' },
+  check: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     borderWidth: 2,
     borderColor: '#333',
     alignItems: 'center',
@@ -142,6 +180,18 @@ const srs = StyleSheet.create({
   },
   checkDone: { backgroundColor: '#2d7a3a', borderColor: '#2d7a3a' },
   checkText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  noteInput: {
+    backgroundColor: '#181818',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    color: '#ddd',
+    fontSize: 13,
+    marginLeft: 24,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+  },
 });
 
 // ---------- exercise card ----------
@@ -161,13 +211,11 @@ function ExerciseCard({ wx, workoutId, allWorkouts, allWx, allSets, exName, onRe
     .filter((s): s is SetRow => !!s && s.workout_exercise_id === wx.id && !s.deleted)
     .sort((a, b) => a.position - b.position);
 
-  // Inteligência (Fase 6): último desempenho + sugestão de carga.
   const history = buildExerciseHistory(wx.exercise_id, allWorkouts, allWx, allSets, {
     onlyCompleted: true,
   });
   const last = getLastPerformance(history, workoutId);
   const suggestion = last ? suggestNextLoad(last.sets) : null;
-
   const lastTop = last
     ? last.sets
         .filter((s) => (s.weight ?? 0) > 0)
@@ -177,6 +225,10 @@ function ExerciseCard({ wx, workoutId, allWorkouts, allWx, allSets, exName, onRe
           return best;
         }, null)
     : null;
+
+  const setEquipment = (eq: string) => {
+    workoutExercises$[wx.id].equipment.set(wx.equipment === eq ? null : eq);
+  };
 
   const addSet = () => {
     const lastSet = wxSets[wxSets.length - 1];
@@ -191,6 +243,7 @@ function ExerciseCard({ wx, workoutId, allWorkouts, allWx, allSets, exName, onRe
       rir: null,
       set_type: 'normal',
       is_completed: false,
+      notes: null,
     } as never);
   };
 
@@ -198,9 +251,9 @@ function ExerciseCard({ wx, workoutId, allWorkouts, allWx, allSets, exName, onRe
     sets$[setId].set((prev: SetRow) => ({ ...prev, ...patch }));
   };
 
-  const completeSet = (setId: string) => {
-    updateSet(setId, { is_completed: true });
-    startRest(defaultRestSeconds$.get());
+  const completeSet = (setId: string, wasCompleted: boolean) => {
+    updateSet(setId, { is_completed: !wasCompleted });
+    if (!wasCompleted) startRest(defaultRestSeconds$.get());
   };
 
   return (
@@ -212,12 +265,25 @@ function ExerciseCard({ wx, workoutId, allWorkouts, allWx, allSets, exName, onRe
         </TouchableOpacity>
       </View>
 
+      {/* Equipamento */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={ecs.eqRow}>
+        {EQUIPMENT_OPTIONS.map((eq) => {
+          const active = wx.equipment === eq;
+          return (
+            <TouchableOpacity
+              key={eq}
+              style={[ecs.eqChip, active && ecs.eqChipActive]}
+              onPress={() => setEquipment(eq)}>
+              <Text style={[ecs.eqChipText, active && ecs.eqChipTextActive]}>{eq}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
       {(lastTop || suggestion) && (
         <View style={ecs.intel}>
           {lastTop ? (
-            <Text style={ecs.intelText}>
-              📅 Última vez: {lastTop.w}kg × {lastTop.r}
-            </Text>
+            <Text style={ecs.intelText}>📅 Última vez: {lastTop.w}kg × {lastTop.r}</Text>
           ) : null}
           {suggestion ? (
             <Text style={ecs.intelSuggestion}>
@@ -229,11 +295,10 @@ function ExerciseCard({ wx, workoutId, allWorkouts, allWx, allSets, exName, onRe
 
       {wxSets.length > 0 && (
         <View style={ecs.tableHeader}>
-          <Text style={[ecs.th, { width: 20 }]}>#</Text>
-          <Text style={[ecs.th, { width: 64 }]}>Peso</Text>
-          <Text style={[ecs.th, { width: 52 }]}>Reps</Text>
-          <Text style={[ecs.th, { width: 52 }]}>RPE</Text>
-          <Text style={[ecs.th, { marginLeft: 'auto', width: 36 }]}>✓</Text>
+          <Text style={[ecs.th, { width: 18 }]}>#</Text>
+          <Text style={[ecs.th, { width: 58 }]}>Peso</Text>
+          <Text style={[ecs.th, { width: 48 }]}>Reps</Text>
+          <Text style={[ecs.th, { width: 46 }]}>RPE</Text>
         </View>
       )}
 
@@ -243,7 +308,8 @@ function ExerciseCard({ wx, workoutId, allWorkouts, allWx, allSets, exName, onRe
           set={s}
           index={i}
           onUpdate={(patch) => updateSet(s.id, patch)}
-          onComplete={() => completeSet(s.id)}
+          onComplete={() => completeSet(s.id, s.is_completed)}
+          onRemove={() => sets$[s.id].deleted.set(true)}
         />
       ))}
 
@@ -263,10 +329,23 @@ const ecs = StyleSheet.create({
     borderColor: '#2a2a2a',
     gap: 4,
   },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   exName: { fontSize: 16, fontWeight: '700', color: '#fff', flex: 1 },
   removeBtn: { padding: 4 },
   removeBtnText: { color: '#444', fontSize: 18 },
+  eqRow: { flexGrow: 0, marginVertical: 8 },
+  eqChip: {
+    backgroundColor: '#222',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+  },
+  eqChipActive: { backgroundColor: '#1f3a52', borderColor: '#4f9cf9' },
+  eqChipText: { color: '#888', fontSize: 13 },
+  eqChipTextActive: { color: '#9fc8ea', fontWeight: '600' },
   intel: {
     backgroundColor: '#15202b',
     borderRadius: 10,
@@ -277,7 +356,7 @@ const ecs = StyleSheet.create({
   },
   intelText: { color: '#8aa0b3', fontSize: 12 },
   intelSuggestion: { color: '#6fcf8e', fontSize: 12, fontWeight: '600' },
-  tableHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
+  tableHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
   th: { color: '#444', fontSize: 11, textAlign: 'center' },
   addSet: { marginTop: 8, paddingVertical: 8, alignItems: 'center' },
   addSetText: { color: '#4f9cf9', fontSize: 14, fontWeight: '600' },
@@ -300,6 +379,8 @@ export default function WorkoutScreen() {
   const wxList = Object.values(wxMap)
     .filter((wx): wx is WorkoutExerciseRow => !!wx && wx.workout_id === id && !wx.deleted)
     .sort((a, b) => a.position - b.position);
+
+  const minimize = () => router.back(); // sai SEM encerrar — treino segue ativo
 
   const doFinish = () => {
     workouts$[id].ended_at.set(new Date().toISOString());
@@ -364,8 +445,8 @@ export default function WorkoutScreen() {
   return (
     <SafeAreaView style={ws.safe} edges={['top']}>
       <View style={ws.header}>
-        <TouchableOpacity style={ws.headerBtn} onPress={discardWorkout}>
-          <Text style={ws.discard}>Descartar</Text>
+        <TouchableOpacity style={ws.headerBtn} onPress={minimize}>
+          <Text style={ws.minimize}>‹ Voltar</Text>
         </TouchableOpacity>
         <View style={ws.headerCenter}>
           <Text style={ws.headerTitle} numberOfLines={1}>
@@ -401,6 +482,10 @@ export default function WorkoutScreen() {
           <TouchableOpacity style={ws.addEx} onPress={addExercise}>
             <Text style={ws.addExText}>+ Adicionar exercício</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity style={ws.discard} onPress={discardWorkout}>
+            <Text style={ws.discardText}>Descartar treino</Text>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -422,11 +507,11 @@ const ws = StyleSheet.create({
   headerCenter: { flex: 1, alignItems: 'center' },
   headerTitle: { color: '#fff', fontSize: 16, fontWeight: '700' },
   timer: { color: '#4f9cf9', fontSize: 13, marginTop: 2 },
-  discard: { color: '#666', fontSize: 15 },
+  minimize: { color: '#4f9cf9', fontSize: 15 },
   finishBtn: { alignItems: 'flex-end' },
   finishText: { color: '#4f9cf9', fontSize: 15, fontWeight: '700' },
   scroll: { flex: 1 },
-  content: { padding: 16, gap: 14, paddingBottom: 120 },
+  content: { padding: 16, gap: 14, paddingBottom: 140 },
   addEx: {
     borderWidth: 1,
     borderColor: '#2a2a2a',
@@ -436,4 +521,6 @@ const ws = StyleSheet.create({
     alignItems: 'center',
   },
   addExText: { color: '#4f9cf9', fontSize: 16, fontWeight: '600' },
+  discard: { padding: 14, alignItems: 'center' },
+  discardText: { color: '#7a3a3a', fontSize: 14, fontWeight: '600' },
 });

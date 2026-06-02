@@ -13,16 +13,30 @@ export default function HomeScreen() {
   const session = use$(session$);
   const workoutsMap = use$(workouts$);
   const routinesMap = use$(routines$);
-  const activeId = use$(activeWorkoutId$);
+  use$(activeWorkoutId$); // re-render quando muda
 
-  const recentWorkouts = Object.values(workoutsMap ?? {})
-    .filter((w) => !w.deleted && w.ended_at)
+  const allWorkouts = Object.values(workoutsMap ?? {}).filter((w) => !w.deleted);
+
+  // Treino em andamento = derivado dos dados sincronizados (NÃO só do estado
+  // em memória). Assim, mesmo se o app for fechado no meio do treino, ao
+  // reabrir o "Retomar" aparece e nada se perde.
+  const inProgress = allWorkouts
+    .filter((w) => w.started_at && !w.ended_at)
+    .sort((a, b) => (b.started_at ?? '').localeCompare(a.started_at ?? ''))[0];
+
+  const recentWorkouts = allWorkouts
+    .filter((w) => w.ended_at)
     .sort((a, b) => (b.started_at ?? '').localeCompare(a.started_at ?? ''))
     .slice(0, 5);
 
   const routineList = Object.values(routinesMap ?? {})
     .filter((r) => !r.deleted)
     .sort((a, b) => a.position - b.position);
+
+  const resumeWorkout = (id: string) => {
+    activeWorkoutId$.set(id);
+    router.push(`/workout/${id}`);
+  };
 
   const startFreeWorkout = () => {
     const id = newId();
@@ -80,12 +94,18 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {activeId ? (
-          <TouchableOpacity
-            style={[styles.primaryBtn, styles.resumeBtn]}
-            onPress={() => router.push(`/workout/${activeId}`)}>
-            <Text style={styles.primaryBtnText}>▶ Retomar treino em andamento</Text>
-          </TouchableOpacity>
+        {inProgress ? (
+          <View style={{ gap: 10 }}>
+            <TouchableOpacity
+              style={[styles.primaryBtn, styles.resumeBtn]}
+              onPress={() => resumeWorkout(inProgress.id)}>
+              <Text style={styles.primaryBtnText}>▶ Retomar: {inProgress.name ?? 'Treino'}</Text>
+              <Text style={styles.resumeSub}>Treino em andamento — toque para continuar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.secondaryBtn} onPress={startFreeWorkout}>
+              <Text style={styles.secondaryBtnText}>+ Novo treino livre</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <TouchableOpacity style={styles.primaryBtn} onPress={startFreeWorkout}>
             <Text style={styles.primaryBtnText}>+ Iniciar treino livre</Text>
@@ -99,8 +119,7 @@ export default function HomeScreen() {
               <TouchableOpacity
                 key={r.id}
                 style={styles.routineCard}
-                onPress={() => startRoutineWorkout(r.id, r.name)}
-                disabled={!!activeId}>
+                onPress={() => startRoutineWorkout(r.id, r.name)}>
                 <View style={styles.routineInfo}>
                   <Text style={styles.routineName}>{r.name}</Text>
                   {r.notes ? <Text style={styles.routineNotes}>{r.notes}</Text> : null}
@@ -150,6 +169,15 @@ const styles = StyleSheet.create({
   sub: { fontSize: 15, color: '#888', marginTop: 4 },
   primaryBtn: { backgroundColor: '#4f9cf9', borderRadius: 16, padding: 20, alignItems: 'center' },
   resumeBtn: { backgroundColor: '#2d7a3a' },
+  resumeSub: { color: '#cdebd3', fontSize: 12, marginTop: 4 },
+  secondaryBtn: {
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+    borderRadius: 14,
+    padding: 14,
+    alignItems: 'center',
+  },
+  secondaryBtnText: { color: '#888', fontSize: 15, fontWeight: '600' },
   primaryBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   section: { gap: 10 },
   sectionTitle: { fontSize: 16, fontWeight: '600', color: '#aaa', marginBottom: 4 },
