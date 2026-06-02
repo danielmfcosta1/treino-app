@@ -49,7 +49,11 @@ O device roda a versão anterior. **Próxima ação concreta:**
 1. **Instalar fixes** (acima) → **testar 1-2 treinos reais** antes de feature nova
 2. **Rotina com exercícios** — hoje rotina só tem nome; predefinir exercícios resolve
    "treino vazio" + "esqueci o treino" (maior impacto no uso real)
-3. **Superset/dropset** na UI (schema já suporta: `set_type`, `superset_group`)
+3. **Criar exercício** (custom, `is_custom=true`) — botão no picker. Daniel pediu.
+   ⚠️ Catálogo expandido p/ 75 via SQL direto (02/06) — falta espelhar os 38 novos
+   no `src/seed/exercises.seed.ts` E tornar `seedExercises` incremental (inserir
+   faltantes por nome vs. servidor) p/ não divergir em install novo.
+4. **Superset/dropset** na UI (schema já suporta: `set_type`, `superset_group`)
 4. Editar/excluir treino no Histórico
 5. RIR + medidas corporais detalhadas (cintura/braço) na UI
 6. Alerta de estagnação/deload na tela (lógica já existe em `src/domain/progression.ts`)
