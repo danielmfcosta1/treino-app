@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { use$ } from '@legendapp/state/react';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -27,8 +28,9 @@ export default function RootLayout() {
   }, [ready]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+    <SafeAreaProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
         {/* Rotas autenticadas: visíveis só com sessão. O expo-router troca o
             grupo de forma declarativa quando `session` muda (login/logout),
             sem navegação imperativa — evita o crash "navigate before mounting". */}
@@ -40,11 +42,7 @@ export default function RootLayout() {
           />
           <Stack.Screen
             name="exercises/picker"
-            options={{
-              presentation: 'modal',
-              title: 'Escolher exercício',
-              headerStyle: { backgroundColor: colorScheme === 'dark' ? '#151718' : '#fff' },
-            }}
+            options={{ presentation: 'modal', headerShown: false }}
           />
           <Stack.Screen name="settings" options={{ presentation: 'modal', headerShown: false }} />
         </Stack.Protected>
@@ -53,8 +51,9 @@ export default function RootLayout() {
         <Stack.Protected guard={!session}>
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         </Stack.Protected>
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

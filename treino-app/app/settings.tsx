@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { use$ } from '@legendapp/state/react';
 
 import { signOut, session$ } from '@/src/state/auth';
@@ -25,6 +26,7 @@ import { shareTextFile } from '@/src/lib/share';
 const REST_PRESETS = [60, 90, 120, 180];
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const session = use$(session$);
   const restSecs = use$(defaultRestSeconds$);
   const [busy, setBusy] = useState(false);
@@ -80,9 +82,14 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={s.safe}>
-      <ScrollView contentContainerStyle={s.content}>
+    <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
+      <View style={s.topBar}>
         <Text style={s.title}>Configurações</Text>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={s.closeBtn}>
+          <Text style={s.closeText}>Fechar</Text>
+        </TouchableOpacity>
+      </View>
+      <ScrollView contentContainerStyle={s.content}>
 
         {/* Conta */}
         <View style={s.section}>
@@ -132,7 +139,17 @@ export default function SettingsScreen() {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#0f0f0f' },
-  content: { padding: 20, gap: 24, paddingBottom: 40 },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  closeBtn: { paddingVertical: 6, paddingHorizontal: 8 },
+  closeText: { color: '#4f9cf9', fontSize: 16, fontWeight: '600' },
+  content: { padding: 20, paddingTop: 8, gap: 24, paddingBottom: 40 },
   title: { fontSize: 28, fontWeight: '700', color: '#fff' },
   section: { gap: 10 },
   sectionTitle: { fontSize: 14, fontWeight: '600', color: '#888', textTransform: 'uppercase', letterSpacing: 0.5 },

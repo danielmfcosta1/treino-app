@@ -70,7 +70,13 @@ export default function ExercisePickerScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <View style={styles.topBar}>
+        <Text style={styles.topTitle}>Escolher exercício</Text>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.closeBtn}>
+          <Text style={styles.closeText}>Fechar</Text>
+        </TouchableOpacity>
+      </View>
       <View style={styles.searchBar}>
         <TextInput
           style={styles.input}
@@ -110,6 +116,17 @@ export default function ExercisePickerScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#111' },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  topTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  closeBtn: { paddingVertical: 6, paddingHorizontal: 8 },
+  closeText: { color: '#4f9cf9', fontSize: 16, fontWeight: '600' },
   searchBar: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#222' },
   input: {
     backgroundColor: '#1e1e1e',

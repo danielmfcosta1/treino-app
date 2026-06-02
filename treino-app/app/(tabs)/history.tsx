@@ -99,7 +99,9 @@ export default function HistoryScreen() {
                         {setList.map((s, i) => (
                           <View key={s.id}>
                             <Text style={styles.setLine}>
-                              {i + 1}. {s.weight ? `${s.weight}kg` : '—'} × {s.reps ?? '?'} reps
+                              {s.duration_seconds
+                                ? `${i + 1}. ${Math.floor(s.duration_seconds / 60) > 0 ? `${Math.floor(s.duration_seconds / 60)}:${(s.duration_seconds % 60).toString().padStart(2, '0')}` : `${s.duration_seconds}s`}`
+                                : `${i + 1}. ${s.weight ? `${s.weight}kg` : '—'} × ${s.reps ?? '?'} reps`}
                               {s.rpe ? `  RPE ${s.rpe}` : ''}
                               {s.rir != null ? `  RIR ${s.rir}` : ''}
                             </Text>

@@ -424,6 +424,7 @@ export type Database = {
           created_at: string
           deleted: boolean
           id: string
+          duration_seconds: number | null
           is_completed: boolean
           notes: string | null
           position: number
@@ -440,6 +441,7 @@ export type Database = {
           created_at?: string
           deleted?: boolean
           id?: string
+          duration_seconds?: number | null
           is_completed?: boolean
           notes?: string | null
           position?: number
@@ -456,6 +458,7 @@ export type Database = {
           created_at?: string
           deleted?: boolean
           id?: string
+          duration_seconds?: number | null
           is_completed?: boolean
           notes?: string | null
           position?: number

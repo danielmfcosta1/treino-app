@@ -1,9 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -22,35 +20,26 @@ import { newId } from '@/src/lib/ids';
 import { buildExerciseHistory } from '@/src/domain/aggregate';
 import { getLastPerformance } from '@/src/domain/lastPerformance';
 import { suggestNextLoad, type SuggestionReason } from '@/src/domain/progression';
-import type { SetRow, WorkoutExerciseRow, WorkoutRow } from '@/src/domain/types';
+import type { ExerciseRow, SetRow, WorkoutExerciseRow, WorkoutRow } from '@/src/domain/types';
 
 type RowMap<T> = Record<string, T | undefined>;
 
-const EQUIPMENT_OPTIONS = [
-  'Barra',
-  'Halteres',
-  'Máquina',
-  'Smith',
-  'Cabo',
-  'Polia',
-  'Peso corporal',
-  'Kettlebell',
-];
+const EQUIPMENT_OPTIONS = ['Barra', 'Halteres', 'Máquina', 'Smith', 'Cabo', 'Polia', 'Kettlebell'];
 
 // ---------- helpers ----------
 
 function useElapsed(startedAt: string | null) {
-  const [secs, setSecs] = useState(0);
-  const ref = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Recalcula SEMPRE a partir do horário absoluto (started_at), nunca por
+  // acumular ticks. Assim, mesmo se o app for pro background e voltar, o
+  // cronômetro mostra o tempo real (não "pausa" junto com o app).
+  const [, force] = useState(0);
   useEffect(() => {
     if (!startedAt) return;
-    const base = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
-    setSecs(base);
-    ref.current = setInterval(() => setSecs((s) => s + 1), 1000);
-    return () => {
-      if (ref.current) clearInterval(ref.current);
-    };
+    const t = setInterval(() => force((n) => n + 1), 1000);
+    return () => clearInterval(t);
   }, [startedAt]);
+  if (!startedAt) return '0:00';
+  const secs = Math.max(0, Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000));
   const h = Math.floor(secs / 3600);
   const m = Math.floor((secs % 3600) / 60).toString().padStart(2, '0');
   const s = (secs % 60).toString().padStart(2, '0');
@@ -69,73 +58,144 @@ const REASON_LABEL: Record<SuggestionReason, string> = {
   reduce_weight: 'reduzir carga',
 };
 
-// ---------- set row ----------
+function isIsometric(ex?: ExerciseRow): boolean {
+  return ex?.force === 'static';
+}
+function showsEquipment(ex?: ExerciseRow): boolean {
+  return !!ex && ex.category === 'strength' && ex.equipment !== 'body only' && ex.force !== 'static';
+}
+
+// ---------- set row (inputs com ESTADO LOCAL → sem bug de cursor) ----------
 
 interface SetRowProps {
   set: SetRow;
   index: number;
-  onUpdate: (patch: Partial<SetRow>) => void;
-  onComplete: () => void;
+  isometric: boolean;
+  onCommit: (patch: Partial<SetRow>) => void;
+  onToggleComplete: () => void;
   onRemove: () => void;
 }
 
-function SetRowItem({ set, index, onUpdate, onComplete, onRemove }: SetRowProps) {
+function SetRowItem({ set, index, isometric, onCommit, onToggleComplete, onRemove }: SetRowProps) {
   const done = set.is_completed;
+  // Estado local: o que você digita fica aqui e só grava no banco ao SAIR do
+  // campo (onBlur) ou ao concluir a série. Isso elimina o cursor pulando e o
+  // re-render da tela a cada tecla.
+  const [w, setW] = useState(set.weight != null ? String(set.weight) : '');
+  const [r, setR] = useState(set.reps != null ? String(set.reps) : '');
+  const [rpe, setRpe] = useState(set.rpe != null ? String(set.rpe) : '');
+  const [dur, setDur] = useState(set.duration_seconds != null ? String(set.duration_seconds) : '');
+  const [note, setNote] = useState(set.notes ?? '');
   const [noteOpen, setNoteOpen] = useState(false);
-  const hasNote = !!(set.notes && set.notes.trim());
+
+  const commit = () =>
+    onCommit({
+      weight: parseNum(w),
+      reps: parseNum(r),
+      rpe: parseNum(rpe),
+      duration_seconds: dur ? Math.round(parseNum(dur) ?? 0) : null,
+      notes: note.trim() ? note.trim() : null,
+    });
+
+  const toggle = () => {
+    commit();
+    onToggleComplete();
+  };
 
   return (
     <View>
       <View style={[srs.row, done && srs.rowDone]}>
         <Text style={srs.num}>{index + 1}</Text>
-        <TextInput
-          style={[srs.input, srs.weightInput]}
-          value={set.weight != null ? String(set.weight) : ''}
-          onChangeText={(v) => onUpdate({ weight: parseNum(v) })}
-          keyboardType="decimal-pad"
-          placeholder="kg"
-          placeholderTextColor="#444"
-        />
-        <Text style={srs.x}>×</Text>
-        <TextInput
-          style={[srs.input, srs.repsInput]}
-          value={set.reps != null ? String(set.reps) : ''}
-          onChangeText={(v) => onUpdate({ reps: parseNum(v) })}
-          keyboardType="number-pad"
-          placeholder="reps"
-          placeholderTextColor="#444"
-        />
-        <TextInput
-          style={[srs.input, srs.rpeInput]}
-          value={set.rpe != null ? String(set.rpe) : ''}
-          onChangeText={(v) => onUpdate({ rpe: parseNum(v) })}
-          keyboardType="decimal-pad"
-          placeholder="RPE"
-          placeholderTextColor="#333"
-        />
+
+        {isometric ? (
+          <>
+            <TextInput
+              style={[srs.input, srs.timeInput]}
+              value={dur}
+              onChangeText={setDur}
+              onBlur={commit}
+              keyboardType="number-pad"
+              placeholder="tempo (s)"
+              placeholderTextColor="#444"
+            />
+            <Text style={srs.timeHint}>segundos</Text>
+          </>
+        ) : (
+          <>
+            <TextInput
+              style={[srs.input, srs.weightInput]}
+              value={w}
+              onChangeText={setW}
+              onBlur={commit}
+              keyboardType="decimal-pad"
+              placeholder="kg"
+              placeholderTextColor="#444"
+            />
+            <Text style={srs.x}>×</Text>
+            <TextInput
+              style={[srs.input, srs.repsInput]}
+              value={r}
+              onChangeText={setR}
+              onBlur={commit}
+              keyboardType="number-pad"
+              placeholder="reps"
+              placeholderTextColor="#444"
+            />
+            <TextInput
+              style={[srs.input, srs.rpeInput]}
+              value={rpe}
+              onChangeText={setRpe}
+              onBlur={commit}
+              keyboardType="decimal-pad"
+              placeholder="RPE"
+              placeholderTextColor="#333"
+            />
+          </>
+        )}
+
         <TouchableOpacity
-          style={[srs.noteBtn, (hasNote || noteOpen) && srs.noteBtnActive]}
+          style={[srs.noteBtn, (note.trim() || noteOpen) && srs.noteBtnOn]}
+          hitSlop={6}
           onPress={() => setNoteOpen((o) => !o)}>
-          <Text style={[srs.noteIcon, (hasNote || noteOpen) && srs.noteIconActive]}>✎</Text>
+          <Text style={[srs.noteIcon, (note.trim() || noteOpen) && srs.noteIconOn]}>✎</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[srs.check, done && srs.checkDone]}
+          hitSlop={6}
           onLongPress={onRemove}
-          onPress={() => onComplete()}>
+          onPress={toggle}>
           <Text style={srs.checkText}>{done ? '✓' : ''}</Text>
         </TouchableOpacity>
       </View>
 
-      {(noteOpen || hasNote) && (
-        <TextInput
-          style={srs.noteInput}
-          value={set.notes ?? ''}
-          onChangeText={(v) => onUpdate({ notes: v })}
-          placeholder="Obs.: improvisei, dropset, sem aparelho…"
-          placeholderTextColor="#555"
-          multiline
-        />
+      {noteOpen && (
+        <View style={srs.noteBox}>
+          <TextInput
+            style={srs.noteInput}
+            value={note}
+            onChangeText={setNote}
+            onBlur={commit}
+            placeholder="Obs.: improvisei, dropset, sem aparelho…"
+            placeholderTextColor="#555"
+            multiline
+            autoFocus
+          />
+          <TouchableOpacity
+            style={srs.noteDone}
+            onPress={() => {
+              commit();
+              setNoteOpen(false);
+            }}>
+            <Text style={srs.noteDoneText}>OK</Text>
+          </TouchableOpacity>
+        </View>
       )}
+      {!noteOpen && note.trim() ? (
+        <Text style={srs.notePreview} numberOfLines={1}>
+          ✎ {note.trim()}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -157,17 +217,13 @@ const srs = StyleSheet.create({
   weightInput: { width: 58 },
   repsInput: { width: 48 },
   rpeInput: { width: 46 },
+  timeInput: { width: 90 },
+  timeHint: { color: '#666', fontSize: 12 },
   x: { color: '#444', fontSize: 14 },
-  noteBtn: {
-    width: 30,
-    height: 36,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  noteBtnActive: {},
+  noteBtn: { width: 30, height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  noteBtnOn: {},
   noteIcon: { color: '#555', fontSize: 16 },
-  noteIconActive: { color: '#e0a93f' },
+  noteIconOn: { color: '#e0a93f' },
   check: {
     width: 34,
     height: 34,
@@ -180,18 +236,21 @@ const srs = StyleSheet.create({
   },
   checkDone: { backgroundColor: '#2d7a3a', borderColor: '#2d7a3a' },
   checkText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  noteBox: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginLeft: 24, marginBottom: 6 },
   noteInput: {
+    flex: 1,
     backgroundColor: '#181818',
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
     color: '#ddd',
     fontSize: 13,
-    marginLeft: 24,
-    marginBottom: 6,
     borderWidth: 1,
     borderColor: '#2a2a2a',
   },
+  noteDone: { backgroundColor: '#2d4a66', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 10 },
+  noteDoneText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  notePreview: { color: '#caa45a', fontSize: 12, marginLeft: 24, marginBottom: 6 },
 });
 
 // ---------- exercise card ----------
@@ -199,23 +258,28 @@ const srs = StyleSheet.create({
 interface ExCardProps {
   wx: WorkoutExerciseRow;
   workoutId: string;
+  exercise?: ExerciseRow;
   allWorkouts: RowMap<WorkoutRow>;
   allWx: RowMap<WorkoutExerciseRow>;
   allSets: RowMap<SetRow>;
-  exName: string;
   onRemove: () => void;
 }
 
-function ExerciseCard({ wx, workoutId, allWorkouts, allWx, allSets, exName, onRemove }: ExCardProps) {
+function ExerciseCard({ wx, workoutId, exercise, allWorkouts, allWx, allSets, onRemove }: ExCardProps) {
+  const [collapsed, setCollapsed] = useState(false);
+  const isometric = isIsometric(exercise);
+  const exName = exercise?.name ?? 'Exercício';
+
   const wxSets = Object.values(allSets)
     .filter((s): s is SetRow => !!s && s.workout_exercise_id === wx.id && !s.deleted)
     .sort((a, b) => a.position - b.position);
+  const doneCount = wxSets.filter((s) => s.is_completed).length;
 
   const history = buildExerciseHistory(wx.exercise_id, allWorkouts, allWx, allSets, {
     onlyCompleted: true,
   });
   const last = getLastPerformance(history, workoutId);
-  const suggestion = last ? suggestNextLoad(last.sets) : null;
+  const suggestion = !isometric && last ? suggestNextLoad(last.sets) : null;
   const lastTop = last
     ? last.sets
         .filter((s) => (s.weight ?? 0) > 0)
@@ -237,8 +301,9 @@ function ExerciseCard({ wx, workoutId, allWorkouts, allWx, allSets, exName, onRe
       id,
       workout_exercise_id: wx.id,
       position: (lastSet?.position ?? 0) + 1,
-      weight: lastSet?.weight ?? suggestion?.weight ?? null,
-      reps: lastSet?.reps ?? suggestion?.reps ?? null,
+      weight: isometric ? null : lastSet?.weight ?? suggestion?.weight ?? null,
+      reps: isometric ? null : lastSet?.reps ?? suggestion?.reps ?? null,
+      duration_seconds: isometric ? lastSet?.duration_seconds ?? null : null,
       rpe: null,
       rir: null,
       set_type: 'normal',
@@ -247,75 +312,81 @@ function ExerciseCard({ wx, workoutId, allWorkouts, allWx, allSets, exName, onRe
     } as never);
   };
 
-  const updateSet = (setId: string, patch: Partial<SetRow>) => {
+  const commitSet = (setId: string, patch: Partial<SetRow>) => {
     sets$[setId].set((prev: SetRow) => ({ ...prev, ...patch }));
   };
 
-  const completeSet = (setId: string, wasCompleted: boolean) => {
-    updateSet(setId, { is_completed: !wasCompleted });
+  const toggleComplete = (setId: string, wasCompleted: boolean) => {
+    sets$[setId].is_completed.set(!wasCompleted);
     if (!wasCompleted) startRest(defaultRestSeconds$.get());
   };
 
   return (
     <View style={ecs.card}>
-      <View style={ecs.cardHeader}>
-        <Text style={ecs.exName}>{exName}</Text>
-        <TouchableOpacity onPress={onRemove} style={ecs.removeBtn}>
+      <TouchableOpacity
+        style={ecs.cardHeader}
+        activeOpacity={0.7}
+        onPress={() => setCollapsed((c) => !c)}>
+        <Text style={ecs.chevron}>{collapsed ? '▸' : '▾'}</Text>
+        <Text style={ecs.exName} numberOfLines={1}>
+          {exName}
+        </Text>
+        {collapsed && wxSets.length > 0 ? (
+          <Text style={ecs.summary}>{doneCount}/{wxSets.length} séries</Text>
+        ) : null}
+        <TouchableOpacity onPress={onRemove} hitSlop={8} style={ecs.removeBtn}>
           <Text style={ecs.removeBtnText}>✕</Text>
         </TouchableOpacity>
-      </View>
-
-      {/* Equipamento */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={ecs.eqRow}>
-        {EQUIPMENT_OPTIONS.map((eq) => {
-          const active = wx.equipment === eq;
-          return (
-            <TouchableOpacity
-              key={eq}
-              style={[ecs.eqChip, active && ecs.eqChipActive]}
-              onPress={() => setEquipment(eq)}>
-              <Text style={[ecs.eqChipText, active && ecs.eqChipTextActive]}>{eq}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      {(lastTop || suggestion) && (
-        <View style={ecs.intel}>
-          {lastTop ? (
-            <Text style={ecs.intelText}>📅 Última vez: {lastTop.w}kg × {lastTop.r}</Text>
-          ) : null}
-          {suggestion ? (
-            <Text style={ecs.intelSuggestion}>
-              💡 {suggestion.weight}kg × {suggestion.reps} ({REASON_LABEL[suggestion.reason]})
-            </Text>
-          ) : null}
-        </View>
-      )}
-
-      {wxSets.length > 0 && (
-        <View style={ecs.tableHeader}>
-          <Text style={[ecs.th, { width: 18 }]}>#</Text>
-          <Text style={[ecs.th, { width: 58 }]}>Peso</Text>
-          <Text style={[ecs.th, { width: 48 }]}>Reps</Text>
-          <Text style={[ecs.th, { width: 46 }]}>RPE</Text>
-        </View>
-      )}
-
-      {wxSets.map((s, i) => (
-        <SetRowItem
-          key={s.id}
-          set={s}
-          index={i}
-          onUpdate={(patch) => updateSet(s.id, patch)}
-          onComplete={() => completeSet(s.id, s.is_completed)}
-          onRemove={() => sets$[s.id].deleted.set(true)}
-        />
-      ))}
-
-      <TouchableOpacity style={ecs.addSet} onPress={addSet}>
-        <Text style={ecs.addSetText}>+ Série</Text>
       </TouchableOpacity>
+
+      {!collapsed && (
+        <>
+          {showsEquipment(exercise) && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={ecs.eqRow}>
+              {EQUIPMENT_OPTIONS.map((eq) => {
+                const active = wx.equipment === eq;
+                return (
+                  <TouchableOpacity
+                    key={eq}
+                    style={[ecs.eqChip, active && ecs.eqChipActive]}
+                    onPress={() => setEquipment(eq)}>
+                    <Text style={[ecs.eqChipText, active && ecs.eqChipTextActive]}>{eq}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
+
+          {(lastTop || suggestion) && (
+            <View style={ecs.intel}>
+              {lastTop ? (
+                <Text style={ecs.intelText}>📅 Última vez: {lastTop.w}kg × {lastTop.r}</Text>
+              ) : null}
+              {suggestion ? (
+                <Text style={ecs.intelSuggestion}>
+                  💡 {suggestion.weight}kg × {suggestion.reps} ({REASON_LABEL[suggestion.reason]})
+                </Text>
+              ) : null}
+            </View>
+          )}
+
+          {wxSets.map((s, i) => (
+            <SetRowItem
+              key={s.id}
+              set={s}
+              index={i}
+              isometric={isometric}
+              onCommit={(patch) => commitSet(s.id, patch)}
+              onToggleComplete={() => toggleComplete(s.id, s.is_completed)}
+              onRemove={() => sets$[s.id].deleted.set(true)}
+            />
+          ))}
+
+          <TouchableOpacity style={ecs.addSet} onPress={addSet}>
+            <Text style={ecs.addSetText}>+ Série</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }
@@ -329,8 +400,10 @@ const ecs = StyleSheet.create({
     borderColor: '#2a2a2a',
     gap: 4,
   },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  chevron: { color: '#666', fontSize: 14, width: 16 },
   exName: { fontSize: 16, fontWeight: '700', color: '#fff', flex: 1 },
+  summary: { color: '#4f9cf9', fontSize: 13 },
   removeBtn: { padding: 4 },
   removeBtnText: { color: '#444', fontSize: 18 },
   eqRow: { flexGrow: 0, marginVertical: 8 },
@@ -356,8 +429,6 @@ const ecs = StyleSheet.create({
   },
   intelText: { color: '#8aa0b3', fontSize: 12 },
   intelSuggestion: { color: '#6fcf8e', fontSize: 12, fontWeight: '600' },
-  tableHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
-  th: { color: '#444', fontSize: 11, textAlign: 'center' },
   addSet: { marginTop: 8, paddingVertical: 8, alignItems: 'center' },
   addSetText: { color: '#4f9cf9', fontSize: 14, fontWeight: '600' },
 });
@@ -371,7 +442,7 @@ export default function WorkoutScreen() {
   const workoutsMap = use$(workouts$);
   const wxMap = (use$(workoutExercises$) ?? {}) as RowMap<WorkoutExerciseRow>;
   const setsMap = (use$(sets$) ?? {}) as RowMap<SetRow>;
-  const exercisesMap = use$(exercises$) ?? {};
+  const exercisesMap = (use$(exercises$) ?? {}) as RowMap<ExerciseRow>;
 
   const workout = workoutsMap?.[id];
   const elapsed = useElapsed(workout?.started_at ?? null);
@@ -380,7 +451,7 @@ export default function WorkoutScreen() {
     .filter((wx): wx is WorkoutExerciseRow => !!wx && wx.workout_id === id && !wx.deleted)
     .sort((a, b) => a.position - b.position);
 
-  const minimize = () => router.back(); // sai SEM encerrar — treino segue ativo
+  const minimize = () => router.back();
 
   const doFinish = () => {
     workouts$[id].ended_at.set(new Date().toISOString());
@@ -445,7 +516,7 @@ export default function WorkoutScreen() {
   return (
     <SafeAreaView style={ws.safe} edges={['top']}>
       <View style={ws.header}>
-        <TouchableOpacity style={ws.headerBtn} onPress={minimize}>
+        <TouchableOpacity style={ws.headerBtn} hitSlop={8} onPress={minimize}>
           <Text style={ws.minimize}>‹ Voltar</Text>
         </TouchableOpacity>
         <View style={ws.headerCenter}>
@@ -454,40 +525,38 @@ export default function WorkoutScreen() {
           </Text>
           <Text style={ws.timer}>{elapsed}</Text>
         </View>
-        <TouchableOpacity style={[ws.headerBtn, ws.finishBtn]} onPress={finishWorkout}>
+        <TouchableOpacity style={[ws.headerBtn, ws.finishBtn]} hitSlop={8} onPress={finishWorkout}>
           <Text style={ws.finishText}>Finalizar</Text>
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView
-          style={ws.scroll}
-          contentContainerStyle={ws.content}
-          keyboardShouldPersistTaps="handled">
-          {wxList.map((wx) => (
-            <ExerciseCard
-              key={wx.id}
-              wx={wx}
-              workoutId={id}
-              allWorkouts={workoutsMap ?? {}}
-              allWx={wxMap}
-              allSets={setsMap}
-              exName={exercisesMap[wx.exercise_id]?.name ?? 'Exercício'}
-              onRemove={() => removeExercise(wx.id)}
-            />
-          ))}
+      <ScrollView
+        style={ws.scroll}
+        contentContainerStyle={ws.content}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets>
+        {wxList.map((wx) => (
+          <ExerciseCard
+            key={wx.id}
+            wx={wx}
+            workoutId={id}
+            exercise={exercisesMap[wx.exercise_id]}
+            allWorkouts={workoutsMap ?? {}}
+            allWx={wxMap}
+            allSets={setsMap}
+            onRemove={() => removeExercise(wx.id)}
+          />
+        ))}
 
-          <TouchableOpacity style={ws.addEx} onPress={addExercise}>
-            <Text style={ws.addExText}>+ Adicionar exercício</Text>
-          </TouchableOpacity>
+        <TouchableOpacity style={ws.addEx} onPress={addExercise}>
+          <Text style={ws.addExText}>+ Adicionar exercício</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={ws.discard} onPress={discardWorkout}>
-            <Text style={ws.discardText}>Descartar treino</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        <TouchableOpacity style={ws.discard} onPress={discardWorkout}>
+          <Text style={ws.discardText}>Descartar treino</Text>
+        </TouchableOpacity>
+      </ScrollView>
 
       <RestTimerBar />
     </SafeAreaView>
@@ -511,7 +580,7 @@ const ws = StyleSheet.create({
   finishBtn: { alignItems: 'flex-end' },
   finishText: { color: '#4f9cf9', fontSize: 15, fontWeight: '700' },
   scroll: { flex: 1 },
-  content: { padding: 16, gap: 14, paddingBottom: 140 },
+  content: { padding: 16, gap: 14, paddingBottom: 160 },
   addEx: {
     borderWidth: 1,
     borderColor: '#2a2a2a',
