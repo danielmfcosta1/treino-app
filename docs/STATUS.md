@@ -1,6 +1,6 @@
 # App Treino — Estado & Pendências
 
-_Última atualização: 2026-06-01_
+_Última atualização: 2026-06-02_
 
 App pessoal de treino de academia (single-user). Offline-first, sincroniza com
 a nuvem, custo zero. Rodando no iPhone do Daniel como build standalone.
@@ -38,25 +38,36 @@ a nuvem, custo zero. Rodando no iPhone do Daniel como build standalone.
 - **Retomar treino em andamento** (derivado dos dados, sobrevive ao app fechar) +
   botão "‹ Voltar" (minimiza sem encerrar)
 
-## ⚠️ PENDÊNCIA IMEDIATA
-**Os fixes acima ainda NÃO estão instalados no iPhone** (o aparelho desconectou).
-O device roda a versão anterior. **Próxima ação concreta:**
-1. Plugar o iPhone (desbloqueado, Modo Desenvolvedor ligado)
-2. `cd treino-app && npx expo run:ios --device "00008140-000930A111D3001C" --configuration Release`
-3. Confiar no perfil no iPhone se pedir (Ajustes→Geral→VPN e Gerenciamento)
+### Bugfixes do 2º treino (commit fix safe-area…) — INSTALADO no device
+- #1 `SafeAreaProvider` na raiz (faltava → botões caíam atrás da Dynamic Island no
+  Pro Max) + botão "Fechar" no picker e em Configurações
+- #2 cronômetro recalcula de `started_at` (não pausa em background)
+- #6/#7 inputs de série com estado local + commit onBlur (some cursor bugado) +
+  `automaticallyAdjustKeyboardInsets` (teclado não cobre)
+- #4 nota com botão OK + preview · #5 card recolhível (toque no título)
+- #8 isométrico (force=static) por tempo (coluna `sets.duration_seconds`)
+- #3 v1: chips de equipamento só quando aplicável
+- Catálogo expandido p/ 75 exercícios (38 via SQL em 02/06)
+
+## ⚠️ Estado atual
+Tudo acima **instalado e rodando** no iPhone (verificado sem crash). Aguardando o
+Daniel testar no próximo treino e reportar. Build expira ~7 dias (reinstalar).
 
 ## 🗺️ Roadmap (ordem recomendada)
-1. **Instalar fixes** (acima) → **testar 1-2 treinos reais** antes de feature nova
+1. **Testar os fixes no próximo treino** e reportar
 2. **Rotina com exercícios** — hoje rotina só tem nome; predefinir exercícios resolve
    "treino vazio" + "esqueci o treino" (maior impacto no uso real)
 3. **Criar exercício** (custom, `is_custom=true`) — botão no picker. Daniel pediu.
-   ⚠️ Catálogo expandido p/ 75 via SQL direto (02/06) — falta espelhar os 38 novos
-   no `src/seed/exercises.seed.ts` E tornar `seedExercises` incremental (inserir
+   ⚠️ Catálogo já tem 75 (38 via SQL direto) — falta espelhar os 38 novos no
+   `src/seed/exercises.seed.ts` E tornar `seedExercises` incremental (inserir
    faltantes por nome vs. servidor) p/ não divergir em install novo.
-4. **Superset/dropset** na UI (schema já suporta: `set_type`, `superset_group`)
-4. Editar/excluir treino no Histórico
-5. RIR + medidas corporais detalhadas (cintura/braço) na UI
-6. Alerta de estagnação/deload na tela (lógica já existe em `src/domain/progression.ts`)
+4. **Equipamento — rework completo (#3 v2):** separar movimento-base de equipamento
+   (ex.: "Stiff" + escolher barra/halter), em vez de bakear no nome do exercício.
+   Decisão de design pendente.
+5. **Superset/dropset** na UI (schema já suporta: `set_type`, `superset_group`)
+6. Editar/excluir treino no Histórico
+7. RIR + medidas corporais detalhadas (cintura/braço) na UI
+8. Alerta de estagnação/deload na tela (lógica já existe em `src/domain/progression.ts`)
 
 ### v2 (planejado, adiado)
 - AI coach (LLM lendo os dados) · Sync Apple Health
