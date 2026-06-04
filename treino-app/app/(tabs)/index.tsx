@@ -1,8 +1,11 @@
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { use$ } from '@legendapp/state/react';
 
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Text } from '@/components/ui/text';
 import { workouts$, routines$ } from '@/src/state/store';
 import { session$ } from '@/src/state/auth';
 import { activeWorkoutId$ } from '@/src/state/workout';
@@ -82,133 +85,98 @@ export default function HomeScreen() {
   const firstName = session?.user?.email?.split('@')[0] ?? 'você';
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.greeting}>Olá, {firstName} 👋</Text>
-            <Text style={styles.sub}>Pronto para treinar?</Text>
+    <SafeAreaView className="flex-1 bg-background">
+      <ScrollView className="flex-1" contentContainerClassName="gap-5 p-5 pb-10">
+        <View className="mb-1 flex-row items-center">
+          <View className="flex-1">
+            <Text className="text-2xl font-bold text-foreground">Olá, {firstName} 👋</Text>
+            <Text className="mt-1 text-[15px] text-muted-foreground">Pronto para treinar?</Text>
           </View>
-          <TouchableOpacity style={styles.gear} onPress={() => router.push('/settings')}>
-            <Text style={styles.gearText}>⚙️</Text>
-          </TouchableOpacity>
+          <Button variant="ghost" size="icon" onPress={() => router.push('/settings')}>
+            <Text className="text-[22px]">⚙️</Text>
+          </Button>
         </View>
 
         {inProgress ? (
-          <View style={{ gap: 10 }}>
-            <TouchableOpacity
-              style={[styles.primaryBtn, styles.resumeBtn]}
+          <View className="gap-2.5">
+            <Button
+              className="h-auto flex-col rounded-2xl bg-[#2d7a3a] py-5 active:bg-[#256830]"
               onPress={() => resumeWorkout(inProgress.id)}>
-              <Text style={styles.primaryBtnText}>▶ Retomar: {inProgress.name ?? 'Treino'}</Text>
-              <Text style={styles.resumeSub}>Treino em andamento — toque para continuar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryBtn} onPress={startFreeWorkout}>
-              <Text style={styles.secondaryBtnText}>+ Novo treino livre</Text>
-            </TouchableOpacity>
+              <Text className="text-lg font-bold text-white">
+                ▶ Retomar: {inProgress.name ?? 'Treino'}
+              </Text>
+              <Text className="mt-1 text-xs text-[#cdebd3]">
+                Treino em andamento — toque para continuar
+              </Text>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-auto rounded-xl py-3.5"
+              onPress={startFreeWorkout}>
+              <Text className="font-semibold text-muted-foreground">+ Novo treino livre</Text>
+            </Button>
           </View>
         ) : (
-          <TouchableOpacity style={styles.primaryBtn} onPress={startFreeWorkout}>
-            <Text style={styles.primaryBtnText}>+ Iniciar treino livre</Text>
-          </TouchableOpacity>
+          <Button className="h-auto rounded-2xl py-5" onPress={startFreeWorkout}>
+            <Text className="text-lg font-bold text-primary-foreground">+ Iniciar treino livre</Text>
+          </Button>
         )}
 
         {routineList.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Suas rotinas</Text>
+          <View className="gap-2.5">
+            <Text className="mb-1 text-base font-semibold text-muted-foreground">Suas rotinas</Text>
             {routineList.map((r) => (
-              <TouchableOpacity
+              <Button
                 key={r.id}
-                style={styles.routineCard}
+                variant="outline"
+                className="h-auto flex-row items-center justify-between gap-3 rounded-xl bg-card px-4 py-4"
                 onPress={() => startRoutineWorkout(r.id, r.name)}>
-                <View style={styles.routineInfo}>
-                  <Text style={styles.routineName}>{r.name}</Text>
-                  {r.notes ? <Text style={styles.routineNotes}>{r.notes}</Text> : null}
+                <View className="flex-1">
+                  <Text className="text-base font-semibold text-foreground">{r.name}</Text>
+                  {r.notes ? (
+                    <Text className="mt-0.5 text-[13px] text-muted-foreground">{r.notes}</Text>
+                  ) : null}
                 </View>
-                <Text style={styles.routineStart}>Iniciar →</Text>
-              </TouchableOpacity>
+                <Text className="text-sm font-semibold text-primary">Iniciar →</Text>
+              </Button>
             ))}
           </View>
         )}
 
         {recentWorkouts.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Últimos treinos</Text>
+          <View className="gap-2.5">
+            <Text className="mb-1 text-base font-semibold text-muted-foreground">
+              Últimos treinos
+            </Text>
             {recentWorkouts.map((w) => (
-              <View key={w.id} style={styles.historyCard}>
+              <Card
+                key={w.id}
+                className="flex-row items-center justify-between gap-0 rounded-xl px-4 py-4">
                 <View>
-                  <Text style={styles.historyName}>{w.name ?? 'Treino'}</Text>
-                  <Text style={styles.historyMeta}>{formatDate(w.started_at)}</Text>
+                  <Text className="text-[15px] font-semibold text-foreground">
+                    {w.name ?? 'Treino'}
+                  </Text>
+                  <Text className="mt-0.5 text-xs text-muted-foreground">
+                    {formatDate(w.started_at)}
+                  </Text>
                 </View>
-                <Text style={styles.historyDuration}>
+                <Text className="text-sm font-medium text-primary">
                   {formatDuration(w.started_at, w.ended_at)}
                 </Text>
-              </View>
+              </Card>
             ))}
           </View>
         )}
 
         {recentWorkouts.length === 0 && routineList.length === 0 && (
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>Nenhum treino ainda.</Text>
-            <Text style={styles.emptyHint}>{'Toque em "Iniciar treino livre" para começar!'}</Text>
+          <View className="items-center gap-2 py-10">
+            <Text className="text-base font-medium text-muted-foreground">Nenhum treino ainda.</Text>
+            <Text className="text-center text-sm text-muted-foreground/70">
+              {'Toque em "Iniciar treino livre" para começar!'}
+            </Text>
           </View>
         )}
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f0f0f' },
-  scroll: { flex: 1 },
-  content: { padding: 20, paddingBottom: 40, gap: 20 },
-  header: { marginBottom: 4, flexDirection: 'row', alignItems: 'center' },
-  gear: { padding: 8 },
-  gearText: { fontSize: 22 },
-  greeting: { fontSize: 24, fontWeight: '700', color: '#fff' },
-  sub: { fontSize: 15, color: '#888', marginTop: 4 },
-  primaryBtn: { backgroundColor: '#4f9cf9', borderRadius: 16, padding: 20, alignItems: 'center' },
-  resumeBtn: { backgroundColor: '#2d7a3a' },
-  resumeSub: { color: '#cdebd3', fontSize: 12, marginTop: 4 },
-  secondaryBtn: {
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-    borderRadius: 14,
-    padding: 14,
-    alignItems: 'center',
-  },
-  secondaryBtnText: { color: '#888', fontSize: 15, fontWeight: '600' },
-  primaryBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  section: { gap: 10 },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#aaa', marginBottom: 4 },
-  routineCard: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  routineInfo: { flex: 1 },
-  routineName: { fontSize: 16, fontWeight: '600', color: '#fff' },
-  routineNotes: { fontSize: 13, color: '#666', marginTop: 2 },
-  routineStart: { color: '#4f9cf9', fontSize: 14, fontWeight: '600' },
-  historyCard: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  historyName: { fontSize: 15, fontWeight: '600', color: '#fff' },
-  historyMeta: { fontSize: 12, color: '#666', marginTop: 2 },
-  historyDuration: { fontSize: 14, color: '#4f9cf9', fontWeight: '500' },
-  empty: { alignItems: 'center', paddingVertical: 40, gap: 8 },
-  emptyText: { fontSize: 16, color: '#555', fontWeight: '500' },
-  emptyHint: { fontSize: 14, color: '#444', textAlign: 'center' },
-});
