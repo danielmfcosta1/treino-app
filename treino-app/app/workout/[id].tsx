@@ -17,6 +17,7 @@ import { activeWorkoutId$ } from '@/src/state/workout';
 import { defaultRestSeconds$, startRest } from '@/src/state/restTimer';
 import { RestTimerBar } from '@/src/components/RestTimerBar';
 import { newId } from '@/src/lib/ids';
+import { useColors, type ThemeColors } from '@/src/lib/theme';
 import { buildExerciseHistory } from '@/src/domain/aggregate';
 import { getLastPerformance } from '@/src/domain/lastPerformance';
 import { suggestNextLoad, type SuggestionReason } from '@/src/domain/progression';
@@ -77,6 +78,8 @@ interface SetRowProps {
 }
 
 function SetRowItem({ set, index, isometric, onCommit, onToggleComplete, onRemove }: SetRowProps) {
+  const c = useColors();
+  const srs = makeSrs(c);
   const done = set.is_completed;
   // Estado local: o que você digita fica aqui e só grava no banco ao SAIR do
   // campo (onBlur) ou ao concluir a série. Isso elimina o cursor pulando e o
@@ -116,7 +119,7 @@ function SetRowItem({ set, index, isometric, onCommit, onToggleComplete, onRemov
               onBlur={commit}
               keyboardType="number-pad"
               placeholder="tempo (s)"
-              placeholderTextColor="#444"
+              placeholderTextColor={c.textFaint}
             />
             <Text style={srs.timeHint}>segundos</Text>
           </>
@@ -129,7 +132,7 @@ function SetRowItem({ set, index, isometric, onCommit, onToggleComplete, onRemov
               onBlur={commit}
               keyboardType="decimal-pad"
               placeholder="kg"
-              placeholderTextColor="#444"
+              placeholderTextColor={c.textFaint}
             />
             <Text style={srs.x}>×</Text>
             <TextInput
@@ -139,7 +142,7 @@ function SetRowItem({ set, index, isometric, onCommit, onToggleComplete, onRemov
               onBlur={commit}
               keyboardType="number-pad"
               placeholder="reps"
-              placeholderTextColor="#444"
+              placeholderTextColor={c.textFaint}
             />
             <TextInput
               style={[srs.input, srs.rpeInput]}
@@ -148,7 +151,7 @@ function SetRowItem({ set, index, isometric, onCommit, onToggleComplete, onRemov
               onBlur={commit}
               keyboardType="decimal-pad"
               placeholder="RPE"
-              placeholderTextColor="#333"
+              placeholderTextColor={c.textFaint}
             />
           </>
         )}
@@ -177,7 +180,7 @@ function SetRowItem({ set, index, isometric, onCommit, onToggleComplete, onRemov
             onChangeText={setNote}
             onBlur={commit}
             placeholder="Obs.: improvisei, dropset, sem aparelho…"
-            placeholderTextColor="#555"
+            placeholderTextColor={c.textFaint}
             multiline
             autoFocus
           />
@@ -200,57 +203,57 @@ function SetRowItem({ set, index, isometric, onCommit, onToggleComplete, onRemov
   );
 }
 
-const srs = StyleSheet.create({
+const makeSrs = (c: ThemeColors) => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6 },
   rowDone: { opacity: 0.55 },
-  num: { width: 18, color: '#555', fontSize: 13, textAlign: 'center' },
+  num: { width: 18, color: c.textFaint, fontSize: 13, textAlign: 'center' },
   input: {
-    backgroundColor: '#222',
+    backgroundColor: c.inputBg,
     borderRadius: 8,
     padding: 8,
-    color: '#fff',
+    color: c.text,
     fontSize: 15,
     textAlign: 'center',
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: c.border,
   },
   weightInput: { width: 58 },
   repsInput: { width: 48 },
   rpeInput: { width: 46 },
   timeInput: { width: 90 },
-  timeHint: { color: '#666', fontSize: 12 },
-  x: { color: '#444', fontSize: 14 },
+  timeHint: { color: c.textDim, fontSize: 12 },
+  x: { color: c.textFaint, fontSize: 14 },
   noteBtn: { width: 30, height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   noteBtnOn: {},
-  noteIcon: { color: '#555', fontSize: 16 },
-  noteIconOn: { color: '#e0a93f' },
+  noteIcon: { color: c.textFaint, fontSize: 16 },
+  noteIconOn: { color: c.warn },
   check: {
     width: 34,
     height: 34,
     borderRadius: 17,
     borderWidth: 2,
-    borderColor: '#333',
+    borderColor: c.textFaint,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 'auto',
   },
-  checkDone: { backgroundColor: '#2d7a3a', borderColor: '#2d7a3a' },
+  checkDone: { backgroundColor: c.success, borderColor: c.success },
   checkText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   noteBox: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginLeft: 24, marginBottom: 6 },
   noteInput: {
     flex: 1,
-    backgroundColor: '#181818',
+    backgroundColor: c.inputBg,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    color: '#ddd',
+    color: c.text,
     fontSize: 13,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: c.border,
   },
-  noteDone: { backgroundColor: '#2d4a66', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 10 },
+  noteDone: { backgroundColor: c.accent, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 10 },
   noteDoneText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  notePreview: { color: '#caa45a', fontSize: 12, marginLeft: 24, marginBottom: 6 },
+  notePreview: { color: c.warn, fontSize: 12, marginLeft: 24, marginBottom: 6 },
 });
 
 // ---------- exercise card ----------
@@ -266,6 +269,8 @@ interface ExCardProps {
 }
 
 function ExerciseCard({ wx, workoutId, exercise, allWorkouts, allWx, allSets, onRemove }: ExCardProps) {
+  const c = useColors();
+  const ecs = makeEcs(c);
   const [collapsed, setCollapsed] = useState(false);
   const isometric = isIsometric(exercise);
   const exName = exercise?.name ?? 'Exercício';
@@ -391,51 +396,53 @@ function ExerciseCard({ wx, workoutId, exercise, allWorkouts, allWx, allSets, on
   );
 }
 
-const ecs = StyleSheet.create({
+const makeEcs = (c: ThemeColors) => StyleSheet.create({
   card: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: c.surface,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: c.border,
     gap: 4,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  chevron: { color: '#666', fontSize: 14, width: 16 },
-  exName: { fontSize: 16, fontWeight: '700', color: '#fff', flex: 1 },
-  summary: { color: '#4f9cf9', fontSize: 13 },
+  chevron: { color: c.textDim, fontSize: 14, width: 16 },
+  exName: { fontSize: 16, fontWeight: '700', color: c.text, flex: 1 },
+  summary: { color: c.accent, fontSize: 13 },
   removeBtn: { padding: 4 },
-  removeBtnText: { color: '#444', fontSize: 18 },
+  removeBtnText: { color: c.textFaint, fontSize: 18 },
   eqRow: { flexGrow: 0, marginVertical: 8 },
   eqChip: {
-    backgroundColor: '#222',
+    backgroundColor: c.inputBg,
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: c.border,
   },
-  eqChipActive: { backgroundColor: '#1f3a52', borderColor: '#4f9cf9' },
-  eqChipText: { color: '#888', fontSize: 13 },
-  eqChipTextActive: { color: '#9fc8ea', fontWeight: '600' },
+  eqChipActive: { backgroundColor: c.accentBg, borderColor: c.accent },
+  eqChipText: { color: c.textDim, fontSize: 13 },
+  eqChipTextActive: { color: c.accentSoft, fontWeight: '600' },
   intel: {
-    backgroundColor: '#15202b',
+    backgroundColor: c.accentBg,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: 8,
     gap: 2,
   },
-  intelText: { color: '#8aa0b3', fontSize: 12 },
-  intelSuggestion: { color: '#6fcf8e', fontSize: 12, fontWeight: '600' },
+  intelText: { color: c.textDim, fontSize: 12 },
+  intelSuggestion: { color: c.successSoft, fontSize: 12, fontWeight: '600' },
   addSet: { marginTop: 8, paddingVertical: 8, alignItems: 'center' },
-  addSetText: { color: '#4f9cf9', fontSize: 14, fontWeight: '600' },
+  addSetText: { color: c.accent, fontSize: 14, fontWeight: '600' },
 });
 
 // ---------- main screen ----------
 
 export default function WorkoutScreen() {
+  const c = useColors();
+  const ws = makeWs(c);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
@@ -508,7 +515,7 @@ export default function WorkoutScreen() {
   if (!workout) {
     return (
       <SafeAreaView style={ws.safe}>
-        <Text style={{ color: '#fff', padding: 20 }}>Treino não encontrado.</Text>
+        <Text style={{ color: c.text, padding: 20 }}>Treino não encontrado.</Text>
       </SafeAreaView>
     );
   }
@@ -563,33 +570,33 @@ export default function WorkoutScreen() {
   );
 }
 
-const ws = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f0f0f' },
+const makeWs = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e1e1e',
+    borderBottomColor: c.border,
   },
   headerBtn: { minWidth: 80 },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  timer: { color: '#4f9cf9', fontSize: 13, marginTop: 2 },
-  minimize: { color: '#4f9cf9', fontSize: 15 },
+  headerTitle: { color: c.text, fontSize: 16, fontWeight: '700' },
+  timer: { color: c.accent, fontSize: 13, marginTop: 2 },
+  minimize: { color: c.accent, fontSize: 15 },
   finishBtn: { alignItems: 'flex-end' },
-  finishText: { color: '#4f9cf9', fontSize: 15, fontWeight: '700' },
+  finishText: { color: c.accent, fontSize: 15, fontWeight: '700' },
   scroll: { flex: 1 },
   content: { padding: 16, gap: 14, paddingBottom: 160 },
   addEx: {
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: c.border,
     borderStyle: 'dashed',
     borderRadius: 14,
     padding: 20,
     alignItems: 'center',
   },
-  addExText: { color: '#4f9cf9', fontSize: 16, fontWeight: '600' },
+  addExText: { color: c.accent, fontSize: 16, fontWeight: '600' },
   discard: { padding: 14, alignItems: 'center' },
-  discardText: { color: '#7a3a3a', fontSize: 14, fontWeight: '600' },
+  discardText: { color: c.danger, fontSize: 14, fontWeight: '600' },
 });

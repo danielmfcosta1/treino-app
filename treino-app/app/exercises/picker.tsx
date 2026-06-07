@@ -14,6 +14,7 @@ import { use$ } from '@legendapp/state/react';
 import { exercises$, workoutExercises$ } from '@/src/state/store';
 import { newId } from '@/src/lib/ids';
 import { normalizeName } from '@/src/seed/selection';
+import { useColors, type ThemeColors } from '@/src/lib/theme';
 
 const MUSCLE_LABELS: Record<string, string> = {
   chest: 'Peito', lats: 'Costas', 'middle back': 'Costas méd.', 'lower back': 'Lombar',
@@ -25,6 +26,8 @@ const MUSCLE_LABELS: Record<string, string> = {
 export default function ExercisePickerScreen() {
   const { workoutId, position } = useLocalSearchParams<{ workoutId: string; position: string }>();
   const router = useRouter();
+  const c = useColors();
+  const styles = makeStyles(c);
   const exercisesMap = use$(exercises$);
   const [query, setQuery] = useState('');
 
@@ -81,7 +84,7 @@ export default function ExercisePickerScreen() {
         <TextInput
           style={styles.input}
           placeholder="Buscar por nome ou músculo..."
-          placeholderTextColor="#555"
+          placeholderTextColor={c.textFaint}
           value={query}
           onChangeText={setQuery}
           autoFocus
@@ -114,41 +117,42 @@ export default function ExercisePickerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#111' },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 4,
-  },
-  topTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
-  closeBtn: { paddingVertical: 6, paddingHorizontal: 8 },
-  closeText: { color: '#4f9cf9', fontSize: 16, fontWeight: '600' },
-  searchBar: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#222' },
-  input: {
-    backgroundColor: '#1e1e1e',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: '#fff',
-  },
-  list: { paddingBottom: 40 },
-  sep: { height: 1, backgroundColor: '#1a1a1a', marginLeft: 16 },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: '#111',
-  },
-  rowBody: { flex: 1 },
-  name: { fontSize: 15, color: '#fff', fontWeight: '500' },
-  muscle: { fontSize: 12, color: '#555', marginTop: 2 },
-  arrow: { color: '#333', fontSize: 22 },
-  empty: { padding: 40, alignItems: 'center' },
-  emptyText: { color: '#555', fontSize: 15 },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.surfaceAlt },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingTop: 8,
+      paddingBottom: 4,
+    },
+    topTitle: { fontSize: 18, fontWeight: '700', color: c.text },
+    closeBtn: { paddingVertical: 6, paddingHorizontal: 8 },
+    closeText: { color: c.accent, fontSize: 16, fontWeight: '600' },
+    searchBar: { padding: 12, borderBottomWidth: 1, borderBottomColor: c.inputBg },
+    input: {
+      backgroundColor: c.inputBg,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      fontSize: 15,
+      color: c.text,
+    },
+    list: { paddingBottom: 40 },
+    sep: { height: 1, backgroundColor: c.surface, marginLeft: 16 },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      backgroundColor: c.surfaceAlt,
+    },
+    rowBody: { flex: 1 },
+    name: { fontSize: 15, color: c.text, fontWeight: '500' },
+    muscle: { fontSize: 12, color: c.textFaint, marginTop: 2 },
+    arrow: { color: c.textFaint, fontSize: 22 },
+    empty: { padding: 40, alignItems: 'center' },
+    emptyText: { color: c.textFaint, fontSize: 15 },
+  });

@@ -3,9 +3,12 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { use$ } from '@legendapp/state/react';
 
+import { useColors, type ThemeColors } from '@/src/lib/theme';
 import { workouts$, workoutExercises$, sets$, exercises$ } from '@/src/state/store';
 
 export default function HistoryScreen() {
+  const c = useColors();
+  const styles = makeStyles(c);
   const workoutsMap = use$(workouts$);
   const wxMap = use$(workoutExercises$);
   const setsMap = use$(sets$);
@@ -123,31 +126,31 @@ export default function HistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f0f0f' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
   header: { padding: 20, paddingBottom: 12 },
-  title: { fontSize: 28, fontWeight: '700', color: '#fff' },
+  title: { fontSize: 28, fontWeight: '700', color: c.text },
   list: { paddingHorizontal: 20, paddingBottom: 40 },
   card: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: c.surface,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: c.border,
   },
-  equip: { color: '#7fb3e0', fontSize: 12, fontWeight: '400' },
-  setNote: { color: '#caa45a', fontSize: 12, paddingLeft: 18, marginTop: 1, marginBottom: 4 },
+  equip: { color: c.accentSoft, fontSize: 12, fontWeight: '400' },
+  setNote: { color: c.warn, fontSize: 12, paddingLeft: 18, marginTop: 1, marginBottom: 4 },
   cardTop: { flexDirection: 'row', alignItems: 'center' },
-  cardName: { fontSize: 15, fontWeight: '600', color: '#fff' },
-  cardDate: { fontSize: 12, color: '#666', marginTop: 2, textTransform: 'capitalize' },
+  cardName: { fontSize: 15, fontWeight: '600', color: c.text },
+  cardDate: { fontSize: 12, color: c.textDim, marginTop: 2, textTransform: 'capitalize' },
   cardRight: { alignItems: 'flex-end', marginRight: 12 },
-  cardDuration: { fontSize: 14, color: '#4f9cf9', fontWeight: '500' },
-  cardSets: { fontSize: 12, color: '#555', marginTop: 2 },
-  chevron: { color: '#444', fontSize: 12 },
-  cardDetail: { marginTop: 14, gap: 12, borderTopWidth: 1, borderTopColor: '#2a2a2a', paddingTop: 14 },
+  cardDuration: { fontSize: 14, color: c.accent, fontWeight: '500' },
+  cardSets: { fontSize: 12, color: c.textFaint, marginTop: 2 },
+  chevron: { color: c.textFaint, fontSize: 12 },
+  cardDetail: { marginTop: 14, gap: 12, borderTopWidth: 1, borderTopColor: c.border, paddingTop: 14 },
   exBlock: { gap: 4 },
-  exName: { fontSize: 13, fontWeight: '600', color: '#aaa', marginBottom: 2 },
-  setLine: { fontSize: 13, color: '#777', paddingLeft: 8 },
+  exName: { fontSize: 13, fontWeight: '600', color: c.textDim, marginBottom: 2 },
+  setLine: { fontSize: 13, color: c.textDim, paddingLeft: 8 },
   empty: { alignItems: 'center', paddingVertical: 60 },
-  emptyText: { fontSize: 15, color: '#444' },
+  emptyText: { fontSize: 15, color: c.textFaint },
 });

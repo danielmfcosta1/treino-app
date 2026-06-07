@@ -15,11 +15,14 @@ import { computeStreaks } from '@/src/domain/streaks';
 import { oneRepMaxTrend } from '@/src/domain/progression';
 import { rankMuscles } from '@/src/domain/heatmap';
 import { muscleLabel } from '@/src/lib/muscles';
+import { useColors, type ThemeColors } from '@/src/lib/theme';
 
 const SCREEN_W = Dimensions.get('window').width;
 const EMPTY = {} as Record<string, never>; // ref estável p/ não bustar os useMemo
 
 export default function ProgressScreen() {
+  const c = useColors();
+  const s = makeStyles(c);
   const workoutsMap = use$(workouts$) ?? EMPTY;
   const wxMap = use$(workoutExercises$) ?? EMPTY;
   const setsMap = use$(sets$) ?? EMPTY;
@@ -132,16 +135,16 @@ export default function ProgressScreen() {
                 data={chartData}
                 width={SCREEN_W - 96}
                 height={180}
-                color="#4f9cf9"
+                color={c.accent}
                 thickness={3}
-                dataPointsColor="#6fcf8e"
-                textColor="#888"
+                dataPointsColor={c.successSoft}
+                textColor={c.textDim}
                 textFontSize={10}
                 yAxisTextStyle={s.axisText}
                 xAxisLabelTextStyle={s.axisText}
-                yAxisColor="#2a2a2a"
-                xAxisColor="#2a2a2a"
-                rulesColor="#1e1e1e"
+                yAxisColor={c.border}
+                xAxisColor={c.border}
+                rulesColor={c.border}
                 curved
                 hideRules={false}
                 noOfSections={4}
@@ -192,72 +195,73 @@ export default function ProgressScreen() {
   );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f0f0f' },
-  header: { padding: 20, paddingBottom: 12 },
-  title: { fontSize: 28, fontWeight: '700', color: '#fff' },
-  content: { padding: 20, paddingTop: 4, gap: 22, paddingBottom: 40 },
-  empty: { alignItems: 'center', paddingVertical: 60, gap: 12, paddingHorizontal: 20 },
-  emptyIcon: { fontSize: 48 },
-  emptyText: { fontSize: 20, fontWeight: '600', color: '#fff' },
-  emptyHint: { fontSize: 15, color: '#555', textAlign: 'center', lineHeight: 22 },
-  streakRow: { flexDirection: 'row', gap: 12 },
-  streakCard: {
-    flex: 1,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
-    padding: 18,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  streakNum: { fontSize: 26, fontWeight: '700', color: '#fff' },
-  streakLabel: { fontSize: 12, color: '#888', marginTop: 4 },
-  section: { gap: 10 },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#aaa' },
-  chips: { flexGrow: 0 },
-  chip: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  chipActive: { backgroundColor: '#4f9cf9', borderColor: '#4f9cf9' },
-  chipText: { color: '#888', fontSize: 13 },
-  chipTextActive: { color: '#fff', fontWeight: '600' },
-  chartCard: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  chartEx: { color: '#fff', fontSize: 14, fontWeight: '600', marginBottom: 12 },
-  axisText: { color: '#666', fontSize: 10 },
-  card: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-    gap: 12,
-  },
-  heatRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  heatLabel: { color: '#bbb', fontSize: 13, width: 90 },
-  heatBarBg: { flex: 1, height: 10, backgroundColor: '#222', borderRadius: 5, overflow: 'hidden' },
-  heatBar: { height: 10, backgroundColor: '#4f9cf9', borderRadius: 5 },
-  heatScore: { color: '#666', fontSize: 12, width: 32, textAlign: 'right' },
-  prRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  prName: { color: '#fff', fontSize: 14, flex: 1 },
-  prVals: { alignItems: 'flex-end' },
-  prWeight: { color: '#4f9cf9', fontSize: 14, fontWeight: '600' },
-  prOrm: { color: '#666', fontSize: 11 },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.bg },
+    header: { padding: 20, paddingBottom: 12 },
+    title: { fontSize: 28, fontWeight: '700', color: c.text },
+    content: { padding: 20, paddingTop: 4, gap: 22, paddingBottom: 40 },
+    empty: { alignItems: 'center', paddingVertical: 60, gap: 12, paddingHorizontal: 20 },
+    emptyIcon: { fontSize: 48 },
+    emptyText: { fontSize: 20, fontWeight: '600', color: c.text },
+    emptyHint: { fontSize: 15, color: c.textFaint, textAlign: 'center', lineHeight: 22 },
+    streakRow: { flexDirection: 'row', gap: 12 },
+    streakCard: {
+      flex: 1,
+      backgroundColor: c.surface,
+      borderRadius: 14,
+      padding: 18,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    streakNum: { fontSize: 26, fontWeight: '700', color: c.text },
+    streakLabel: { fontSize: 12, color: c.textDim, marginTop: 4 },
+    section: { gap: 10 },
+    sectionTitle: { fontSize: 16, fontWeight: '600', color: c.textDim },
+    chips: { flexGrow: 0 },
+    chip: {
+      backgroundColor: c.surface,
+      borderRadius: 20,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      marginRight: 8,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    chipActive: { backgroundColor: c.accent, borderColor: c.accent },
+    chipText: { color: c.textDim, fontSize: 13 },
+    chipTextActive: { color: '#fff', fontWeight: '600' },
+    chartCard: {
+      backgroundColor: c.surface,
+      borderRadius: 14,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    chartEx: { color: c.text, fontSize: 14, fontWeight: '600', marginBottom: 12 },
+    axisText: { color: c.textDim, fontSize: 10 },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 14,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      gap: 12,
+    },
+    heatRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    heatLabel: { color: c.textDim, fontSize: 13, width: 90 },
+    heatBarBg: { flex: 1, height: 10, backgroundColor: c.inputBg, borderRadius: 5, overflow: 'hidden' },
+    heatBar: { height: 10, backgroundColor: c.accent, borderRadius: 5 },
+    heatScore: { color: c.textDim, fontSize: 12, width: 32, textAlign: 'right' },
+    prRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+    },
+    prName: { color: c.text, fontSize: 14, flex: 1 },
+    prVals: { alignItems: 'flex-end' },
+    prWeight: { color: c.accent, fontSize: 14, fontWeight: '600' },
+    prOrm: { color: c.textDim, fontSize: 11 },
+  });

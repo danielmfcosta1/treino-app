@@ -3,9 +3,11 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { use$ } from '@legendapp/state/react';
 
 import { addRestSeconds, restTimer$, stopRest } from '../state/restTimer';
+import { useColors } from '../lib/theme';
 
 /** Barra flutuante de descanso. Renderiza só quando há descanso ativo. */
 export function RestTimerBar() {
+  const c = useColors();
   const endsAt = use$(restTimer$.endsAt);
   const total = use$(restTimer$.total);
   const [now, setNow] = useState(Date.now());
@@ -30,8 +32,9 @@ export function RestTimerBar() {
   const secs = (remaining % 60).toString().padStart(2, '0');
   const pct = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
 
+  // Pílula azul (c.accent) com texto branco — legível em dark e light.
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, { backgroundColor: c.accent }]}>
       <View style={[styles.progress, { width: `${pct * 100}%` }]} />
       <View style={styles.content}>
         <TouchableOpacity style={styles.adj} onPress={() => addRestSeconds(-15)}>
@@ -63,18 +66,15 @@ const styles = StyleSheet.create({
     left: 12,
     right: 12,
     bottom: 12,
-    backgroundColor: '#1c2b3a',
     borderRadius: 14,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#2d4a66',
   },
   progress: {
     position: 'absolute',
     left: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: '#234a6b',
+    backgroundColor: 'rgba(255,255,255,0.18)',
   },
   content: {
     flexDirection: 'row',
@@ -84,12 +84,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   center: { flex: 1, alignItems: 'center' },
-  label: { color: '#7fb3e0', fontSize: 11, fontWeight: '600' },
+  label: { color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: '600' },
   time: { color: '#fff', fontSize: 22, fontWeight: '700', fontVariant: ['tabular-nums'] },
   adj: { paddingHorizontal: 8, paddingVertical: 6 },
-  adjText: { color: '#9fc8ea', fontSize: 14, fontWeight: '600' },
+  adjText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   skip: {
-    backgroundColor: '#2d4a66',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,

@@ -12,8 +12,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { signIn } from '@/src/state/auth';
+import { useColors, type ThemeColors } from '@/src/lib/theme';
 
 export default function LoginScreen() {
+  const c = useColors();
+  const styles = makeStyles(c);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,7 +46,7 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor="#888"
+            placeholderTextColor={c.textDim}
             autoCapitalize="none"
             keyboardType="email-address"
             autoComplete="email"
@@ -53,7 +56,7 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="Senha"
-            placeholderTextColor="#888"
+            placeholderTextColor={c.textDim}
             secureTextEntry
             autoComplete="password"
             value={password}
@@ -77,30 +80,31 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f0f0f' },
-  container: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
-  header: { alignItems: 'center', marginBottom: 40 },
-  title: { fontSize: 36, fontWeight: '700', color: '#fff', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#888' },
-  form: { gap: 12 },
-  input: {
-    backgroundColor: '#1e1e1e',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#fff',
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  btn: {
-    backgroundColor: '#4f9cf9',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  error: { color: '#ff6b6b', fontSize: 14, textAlign: 'center' },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.bg },
+    container: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+    header: { alignItems: 'center', marginBottom: 40 },
+    title: { fontSize: 36, fontWeight: '700', color: c.text, marginBottom: 8 },
+    subtitle: { fontSize: 16, color: c.textDim },
+    form: { gap: 12 },
+    input: {
+      backgroundColor: c.inputBg,
+      borderRadius: 12,
+      padding: 16,
+      fontSize: 16,
+      color: c.text,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    btn: {
+      backgroundColor: c.accent,
+      borderRadius: 12,
+      padding: 16,
+      alignItems: 'center',
+      marginTop: 8,
+    },
+    btnDisabled: { opacity: 0.6 },
+    btnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+    error: { color: c.danger, fontSize: 14, textAlign: 'center' },
+  });

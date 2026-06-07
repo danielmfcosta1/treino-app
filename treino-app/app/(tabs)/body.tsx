@@ -15,6 +15,7 @@ import { use$ } from '@legendapp/state/react';
 
 import { bodyMetrics$, cardioSessions$, exercises$ } from '@/src/state/store';
 import { newId } from '@/src/lib/ids';
+import { useColors, type ThemeColors } from '@/src/lib/theme';
 import { ProgressPhotos } from '@/src/components/ProgressPhotos';
 import type { BodyMetricRow, CardioSessionRow } from '@/src/domain/types';
 
@@ -22,6 +23,8 @@ const SCREEN_W = Dimensions.get('window').width;
 const EMPTY = {} as Record<string, never>; // ref estável p/ não bustar os useMemo
 
 export default function BodyScreen() {
+  const c = useColors();
+  const st = makeSt(c);
   const metricsMap = use$(bodyMetrics$) ?? EMPTY;
   const cardioMap = use$(cardioSessions$) ?? EMPTY;
   const exercisesMap = use$(exercises$) ?? EMPTY;
@@ -87,14 +90,14 @@ export default function BodyScreen() {
                 data={weightData}
                 width={SCREEN_W - 96}
                 height={160}
-                color="#6fcf8e"
+                color={c.successSoft}
                 thickness={3}
-                dataPointsColor="#6fcf8e"
+                dataPointsColor={c.successSoft}
                 yAxisTextStyle={st.axisText}
                 xAxisLabelTextStyle={st.axisText}
-                yAxisColor="#2a2a2a"
-                xAxisColor="#2a2a2a"
-                rulesColor="#1e1e1e"
+                yAxisColor={c.border}
+                xAxisColor={c.border}
+                rulesColor={c.border}
                 curved
                 noOfSections={4}
               />
@@ -203,6 +206,8 @@ function CardioModal({
   onClose: () => void;
   exercisesMap: Record<string, { id: string; name: string; category: string | null; deleted: boolean } | undefined>;
 }) {
+  const c = useColors();
+  const fm = makeFm(c);
   const [exerciseId, setExerciseId] = useState<string | null>(null);
   const [minutes, setMinutes] = useState('');
   const [km, setKm] = useState('');
@@ -269,6 +274,8 @@ function Field({
   onChange: (v: string) => void;
   placeholder: string;
 }) {
+  const c = useColors();
+  const fm = makeFm(c);
   return (
     <View style={{ gap: 6 }}>
       <Text style={fm.fieldLabel}>{label}</Text>
@@ -277,7 +284,7 @@ function Field({
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor="#444"
+        placeholderTextColor={c.textFaint}
         keyboardType="decimal-pad"
       />
     </View>
@@ -299,6 +306,8 @@ function FormModal({
   canSave: boolean;
   children: React.ReactNode;
 }) {
+  const c = useColors();
+  const fm = makeFm(c);
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={fm.modal}>
@@ -317,76 +326,78 @@ function FormModal({
   );
 }
 
-const st = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f0f0f' },
-  header: { padding: 20, paddingBottom: 12 },
-  title: { fontSize: 28, fontWeight: '700', color: '#fff' },
-  content: { padding: 20, paddingTop: 4, gap: 24, paddingBottom: 40 },
-  section: { gap: 12 },
-  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#aaa' },
-  addBtn: { backgroundColor: '#1f3a52', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
-  addBtnText: { color: '#7fb3e0', fontSize: 13, fontWeight: '600' },
-  chartCard: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  axisText: { color: '#666', fontSize: 10 },
-  empty: { color: '#555', fontSize: 14, paddingVertical: 8 },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  rowDate: { color: '#666', fontSize: 12 },
-  rowVals: { alignItems: 'flex-end' },
-  rowMain: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  rowSub: { color: '#888', fontSize: 13 },
-});
+const makeSt = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.bg },
+    header: { padding: 20, paddingBottom: 12 },
+    title: { fontSize: 28, fontWeight: '700', color: c.text },
+    content: { padding: 20, paddingTop: 4, gap: 24, paddingBottom: 40 },
+    section: { gap: 12 },
+    sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    sectionTitle: { fontSize: 16, fontWeight: '600', color: c.textDim },
+    addBtn: { backgroundColor: c.accentBg, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+    addBtnText: { color: c.accentSoft, fontSize: 13, fontWeight: '600' },
+    chartCard: {
+      backgroundColor: c.surface,
+      borderRadius: 14,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    axisText: { color: c.textDim, fontSize: 10 },
+    empty: { color: c.textFaint, fontSize: 14, paddingVertical: 8 },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    rowDate: { color: c.textDim, fontSize: 12 },
+    rowVals: { alignItems: 'flex-end' },
+    rowMain: { color: c.text, fontSize: 15, fontWeight: '600' },
+    rowSub: { color: c.textDim, fontSize: 13 },
+  });
 
-const fm = StyleSheet.create({
-  modal: { flex: 1, backgroundColor: '#111' },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222',
-  },
-  modalTitle: { fontSize: 17, fontWeight: '600', color: '#fff' },
-  cancel: { fontSize: 16, color: '#888' },
-  save: { fontSize: 16, color: '#4f9cf9', fontWeight: '600' },
-  saveDisabled: { color: '#333' },
-  modalBody: { padding: 20, gap: 16 },
-  fieldLabel: { color: '#888', fontSize: 13 },
-  input: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#fff',
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  chip: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  chipActive: { backgroundColor: '#4f9cf9', borderColor: '#4f9cf9' },
-  chipText: { color: '#888', fontSize: 13 },
-  chipTextActive: { color: '#fff', fontWeight: '600' },
-});
+const makeFm = (c: ThemeColors) =>
+  StyleSheet.create({
+    modal: { flex: 1, backgroundColor: c.surfaceAlt },
+    modalHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: c.inputBg,
+    },
+    modalTitle: { fontSize: 17, fontWeight: '600', color: c.text },
+    cancel: { fontSize: 16, color: c.textDim },
+    save: { fontSize: 16, color: c.accent, fontWeight: '600' },
+    saveDisabled: { color: c.textFaint },
+    modalBody: { padding: 20, gap: 16 },
+    fieldLabel: { color: c.textDim, fontSize: 13 },
+    input: {
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      padding: 16,
+      fontSize: 16,
+      color: c.text,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    chip: {
+      backgroundColor: c.surface,
+      borderRadius: 20,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      marginRight: 8,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    chipActive: { backgroundColor: c.accent, borderColor: c.accent },
+    chipText: { color: c.textDim, fontSize: 13 },
+    chipTextActive: { color: '#fff', fontWeight: '600' },
+  });

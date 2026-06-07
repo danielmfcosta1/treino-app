@@ -5,8 +5,11 @@ import { use$ } from '@legendapp/state/react';
 import { progressPhotos$ } from '../state/store';
 import { deletePhoto, getSignedPhotoUrl, pickAndUploadPhoto } from '../lib/photos';
 import type { ProgressPhotoRow } from '../domain/types';
+import { useColors, type ThemeColors } from '../lib/theme';
 
 function PhotoThumb({ photo }: { photo: ProgressPhotoRow }) {
+  const c = useColors();
+  const styles = makeStyles(c);
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,15 +30,15 @@ function PhotoThumb({ photo }: { photo: ProgressPhotoRow }) {
   };
 
   return (
-    <TouchableOpacity style={s.thumb} onLongPress={confirmDelete}>
+    <TouchableOpacity style={styles.thumb} onLongPress={confirmDelete}>
       {url ? (
-        <Image source={{ uri: url }} style={s.thumbImg} />
+        <Image source={{ uri: url }} style={styles.thumbImg} />
       ) : (
-        <View style={[s.thumbImg, s.thumbLoading]}>
-          <ActivityIndicator color="#555" />
+        <View style={[styles.thumbImg, styles.thumbLoading]}>
+          <ActivityIndicator color={c.textFaint} />
         </View>
       )}
-      <Text style={s.thumbDate}>
+      <Text style={styles.thumbDate}>
         {new Date(photo.taken_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
       </Text>
     </TouchableOpacity>
@@ -43,6 +46,8 @@ function PhotoThumb({ photo }: { photo: ProgressPhotoRow }) {
 }
 
 export function ProgressPhotos() {
+  const c = useColors();
+  const styles = makeStyles(c);
   const photosMap = use$(progressPhotos$) ?? {};
   const [busy, setBusy] = useState(false);
 
@@ -58,17 +63,17 @@ export function ProgressPhotos() {
   };
 
   return (
-    <View style={s.section}>
-      <View style={s.head}>
-        <Text style={s.title}>Fotos de progresso</Text>
-        <TouchableOpacity style={s.addBtn} onPress={addPhoto} disabled={busy}>
-          <Text style={s.addBtnText}>{busy ? 'Enviando…' : '+ Foto'}</Text>
+    <View style={styles.section}>
+      <View style={styles.head}>
+        <Text style={styles.title}>Fotos de progresso</Text>
+        <TouchableOpacity style={styles.addBtn} onPress={addPhoto} disabled={busy}>
+          <Text style={styles.addBtnText}>{busy ? 'Enviando…' : '+ Foto'}</Text>
         </TouchableOpacity>
       </View>
       {photos.length === 0 ? (
-        <Text style={s.empty}>Nenhuma foto ainda. Toque longo para excluir.</Text>
+        <Text style={styles.empty}>Nenhuma foto ainda. Toque longo para excluir.</Text>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.row}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
           {photos.map((p) => (
             <PhotoThumb key={p.id} photo={p} />
           ))}
@@ -78,16 +83,17 @@ export function ProgressPhotos() {
   );
 }
 
-const s = StyleSheet.create({
-  section: { gap: 12 },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { fontSize: 16, fontWeight: '600', color: '#aaa' },
-  addBtn: { backgroundColor: '#1f3a52', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
-  addBtnText: { color: '#7fb3e0', fontSize: 13, fontWeight: '600' },
-  empty: { color: '#555', fontSize: 14, paddingVertical: 8 },
-  row: { gap: 10, paddingVertical: 4 },
-  thumb: { width: 110, gap: 4 },
-  thumbImg: { width: 110, height: 150, borderRadius: 12, backgroundColor: '#1a1a1a' },
-  thumbLoading: { alignItems: 'center', justifyContent: 'center' },
-  thumbDate: { color: '#666', fontSize: 11, textAlign: 'center' },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    section: { gap: 12 },
+    head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    title: { fontSize: 16, fontWeight: '600', color: c.textDim },
+    addBtn: { backgroundColor: c.accentBg, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+    addBtnText: { color: c.accentSoft, fontSize: 13, fontWeight: '600' },
+    empty: { color: c.textFaint, fontSize: 14, paddingVertical: 8 },
+    row: { gap: 10, paddingVertical: 4 },
+    thumb: { width: 110, gap: 4 },
+    thumbImg: { width: 110, height: 150, borderRadius: 12, backgroundColor: c.surface },
+    thumbLoading: { alignItems: 'center', justifyContent: 'center' },
+    thumbDate: { color: c.textDim, fontSize: 11, textAlign: 'center' },
+  });

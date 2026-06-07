@@ -6,6 +6,8 @@ import { use$ } from '@legendapp/state/react';
 
 import { signOut, session$ } from '@/src/state/auth';
 import { defaultRestSeconds$ } from '@/src/state/restTimer';
+import { appearance$, setAppearance, type AppearancePref } from '@/src/state/appearance';
+import { useColors, type ThemeColors } from '@/src/lib/theme';
 import {
   workouts$,
   workoutExercises$,
@@ -24,11 +26,19 @@ import {
 import { shareTextFile } from '@/src/lib/share';
 
 const REST_PRESETS = [60, 90, 120, 180];
+const APPEARANCE_OPTS: { key: AppearancePref; label: string }[] = [
+  { key: 'system', label: 'Sistema' },
+  { key: 'light', label: 'Claro' },
+  { key: 'dark', label: 'Escuro' },
+];
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const c = useColors();
+  const s = makeStyles(c);
   const session = use$(session$);
   const restSecs = use$(defaultRestSeconds$);
+  const appearance = use$(appearance$);
   const [busy, setBusy] = useState(false);
 
   const activeArr = <T extends { deleted: boolean }>(m: Record<string, T | undefined>): T[] =>
@@ -90,13 +100,29 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={s.content}>
-
         {/* Conta */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>Conta</Text>
           <View style={s.card}>
             <Text style={s.label}>Logado como</Text>
             <Text style={s.value}>{session?.user?.email ?? '—'}</Text>
+          </View>
+        </View>
+
+        {/* Aparência */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Aparência</Text>
+          <View style={s.presetRow}>
+            {APPEARANCE_OPTS.map((o) => (
+              <TouchableOpacity
+                key={o.key}
+                style={[s.preset, appearance === o.key && s.presetActive]}
+                onPress={() => setAppearance(o.key)}>
+                <Text style={[s.presetText, appearance === o.key && s.presetTextActive]}>
+                  {o.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
@@ -137,60 +163,67 @@ export default function SettingsScreen() {
   );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f0f0f' },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 4,
-  },
-  closeBtn: { paddingVertical: 6, paddingHorizontal: 8 },
-  closeText: { color: '#4f9cf9', fontSize: 16, fontWeight: '600' },
-  content: { padding: 20, paddingTop: 8, gap: 24, paddingBottom: 40 },
-  title: { fontSize: 28, fontWeight: '700', color: '#fff' },
-  section: { gap: 10 },
-  sectionTitle: { fontSize: 14, fontWeight: '600', color: '#888', textTransform: 'uppercase', letterSpacing: 0.5 },
-  card: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  label: { color: '#666', fontSize: 12 },
-  value: { color: '#fff', fontSize: 16, marginTop: 4 },
-  presetRow: { flexDirection: 'row', gap: 10 },
-  preset: {
-    flex: 1,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  presetActive: { backgroundColor: '#4f9cf9', borderColor: '#4f9cf9' },
-  presetText: { color: '#888', fontSize: 15, fontWeight: '600' },
-  presetTextActive: { color: '#fff' },
-  actionBtn: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  actionText: { color: '#4f9cf9', fontSize: 15, fontWeight: '600' },
-  signOut: {
-    backgroundColor: '#2a1515',
-    borderRadius: 14,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#4a2020',
-    marginTop: 8,
-  },
-  signOutText: { color: '#ff6b6b', fontSize: 16, fontWeight: '600' },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.bg },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      paddingTop: 8,
+      paddingBottom: 4,
+    },
+    closeBtn: { paddingVertical: 6, paddingHorizontal: 8 },
+    closeText: { color: c.accent, fontSize: 16, fontWeight: '600' },
+    content: { padding: 20, paddingTop: 8, gap: 24, paddingBottom: 40 },
+    title: { fontSize: 28, fontWeight: '700', color: c.text },
+    section: { gap: 10 },
+    sectionTitle: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: c.textDim,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 14,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    label: { color: c.textFaint, fontSize: 12 },
+    value: { color: c.text, fontSize: 16, marginTop: 4 },
+    presetRow: { flexDirection: 'row', gap: 10 },
+    preset: {
+      flex: 1,
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    presetActive: { backgroundColor: c.accent, borderColor: c.accent },
+    presetText: { color: c.textDim, fontSize: 15, fontWeight: '600' },
+    presetTextActive: { color: '#fff' },
+    actionBtn: {
+      backgroundColor: c.surface,
+      borderRadius: 14,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    actionText: { color: c.accent, fontSize: 15, fontWeight: '600' },
+    signOut: {
+      backgroundColor: c.dangerBg,
+      borderRadius: 14,
+      padding: 16,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: c.danger,
+      marginTop: 8,
+    },
+    signOutText: { color: c.danger, fontSize: 16, fontWeight: '600' },
+  });

@@ -14,8 +14,11 @@ import { use$ } from '@legendapp/state/react';
 
 import { routines$, routineExercises$ } from '@/src/state/store';
 import { newId } from '@/src/lib/ids';
+import { useColors, type ThemeColors } from '@/src/lib/theme';
 
 export default function RoutinesScreen() {
+  const c = useColors();
+  const styles = makeStyles(c);
   const routinesMap = use$(routines$);
   const rxMap = use$(routineExercises$);
   const [showCreate, setShowCreate] = useState(false);
@@ -113,7 +116,7 @@ export default function RoutinesScreen() {
             <TextInput
               style={styles.input}
               placeholder="Nome (ex: Push A, Peito/Tríceps)"
-              placeholderTextColor="#555"
+              placeholderTextColor={c.textFaint}
               value={name}
               onChangeText={setName}
               autoFocus
@@ -121,7 +124,7 @@ export default function RoutinesScreen() {
             <TextInput
               style={[styles.input, styles.inputMulti]}
               placeholder="Notas (opcional)"
-              placeholderTextColor="#555"
+              placeholderTextColor={c.textFaint}
               value={notes}
               onChangeText={setNotes}
               multiline
@@ -133,59 +136,60 @@ export default function RoutinesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f0f0f' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    paddingBottom: 12,
-  },
-  title: { fontSize: 28, fontWeight: '700', color: '#fff' },
-  addBtn: { backgroundColor: '#4f9cf9', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
-  addBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
-  list: { paddingHorizontal: 20, paddingBottom: 40 },
-  card: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 14,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  cardBody: { flex: 1 },
-  cardName: { fontSize: 16, fontWeight: '600', color: '#fff' },
-  cardNotes: { fontSize: 13, color: '#666', marginTop: 2 },
-  cardCount: { fontSize: 12, color: '#4f9cf9', marginTop: 6 },
-  deleteBtn: { padding: 8 },
-  deleteBtnText: { color: '#555', fontSize: 18 },
-  empty: { alignItems: 'center', paddingVertical: 60, gap: 10, paddingHorizontal: 20 },
-  emptyText: { fontSize: 16, color: '#555', fontWeight: '500' },
-  emptyHint: { fontSize: 14, color: '#3a3a3a', textAlign: 'center', lineHeight: 20 },
-  modal: { flex: 1, backgroundColor: '#111' },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222',
-  },
-  modalTitle: { fontSize: 17, fontWeight: '600', color: '#fff' },
-  cancel: { fontSize: 16, color: '#888' },
-  save: { fontSize: 16, color: '#4f9cf9', fontWeight: '600' },
-  saveDisabled: { color: '#333' },
-  modalBody: { padding: 20, gap: 12 },
-  input: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#fff',
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  inputMulti: { minHeight: 80, textAlignVertical: 'top' },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.bg },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 20,
+      paddingBottom: 12,
+    },
+    title: { fontSize: 28, fontWeight: '700', color: c.text },
+    addBtn: { backgroundColor: c.accent, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
+    addBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
+    list: { paddingHorizontal: 20, paddingBottom: 40 },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 14,
+      padding: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    cardBody: { flex: 1 },
+    cardName: { fontSize: 16, fontWeight: '600', color: c.text },
+    cardNotes: { fontSize: 13, color: c.textDim, marginTop: 2 },
+    cardCount: { fontSize: 12, color: c.accent, marginTop: 6 },
+    deleteBtn: { padding: 8 },
+    deleteBtnText: { color: c.textFaint, fontSize: 18 },
+    empty: { alignItems: 'center', paddingVertical: 60, gap: 10, paddingHorizontal: 20 },
+    emptyText: { fontSize: 16, color: c.textFaint, fontWeight: '500' },
+    emptyHint: { fontSize: 14, color: c.textFaint, textAlign: 'center', lineHeight: 20 },
+    modal: { flex: 1, backgroundColor: c.surfaceAlt },
+    modalHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    modalTitle: { fontSize: 17, fontWeight: '600', color: c.text },
+    cancel: { fontSize: 16, color: c.textDim },
+    save: { fontSize: 16, color: c.accent, fontWeight: '600' },
+    saveDisabled: { color: c.textFaint },
+    modalBody: { padding: 20, gap: 12 },
+    input: {
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      padding: 16,
+      fontSize: 16,
+      color: c.text,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    inputMulti: { minHeight: 80, textAlignVertical: 'top' },
+  });
