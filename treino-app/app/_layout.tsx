@@ -52,6 +52,7 @@ export default function RootLayout() {
             name="exercises/picker"
             options={{ presentation: 'modal', headerShown: false }}
           />
+          <Stack.Screen name="routines/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="settings" options={{ presentation: 'modal', headerShown: false }} />
         </Stack.Protected>
 

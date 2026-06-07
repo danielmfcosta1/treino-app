@@ -50,17 +50,21 @@ export const EXERCISE_SEED: SeedExercise[] = [
 
   // ---- Pernas ----
   { name: 'Agachamento Livre', category: 'strength', equipment: 'barbell', force: 'push', mechanic: 'compound', primary_muscles: ['quadriceps'], secondary_muscles: ['glutes', 'hamstrings', 'lower back'] },
+  { name: 'Agachamento Sumô', category: 'strength', equipment: 'barbell', force: 'push', mechanic: 'compound', primary_muscles: ['quadriceps'], secondary_muscles: ['glutes', 'hamstrings', 'lower back'] },
+  { name: 'Agachamento Frontal', category: 'strength', equipment: 'barbell', force: 'push', mechanic: 'compound', primary_muscles: ['quadriceps'], secondary_muscles: ['glutes', 'lower back'] },
   { name: 'Leg Press 45°', category: 'strength', equipment: 'machine', force: 'push', mechanic: 'compound', primary_muscles: ['quadriceps'], secondary_muscles: ['glutes', 'hamstrings'] },
   { name: 'Cadeira Extensora', category: 'strength', equipment: 'machine', force: 'push', mechanic: 'isolation', primary_muscles: ['quadriceps'], secondary_muscles: [] },
   { name: 'Mesa Flexora', category: 'strength', equipment: 'machine', force: 'pull', mechanic: 'isolation', primary_muscles: ['hamstrings'], secondary_muscles: [] },
   { name: 'Stiff com Barra', category: 'strength', equipment: 'barbell', force: 'pull', mechanic: 'compound', primary_muscles: ['hamstrings'], secondary_muscles: ['glutes', 'lower back'] },
   { name: 'Afundo (Lunge) com Halteres', category: 'strength', equipment: 'dumbbell', force: 'push', mechanic: 'compound', primary_muscles: ['quadriceps'], secondary_muscles: ['glutes', 'hamstrings'] },
   { name: 'Elevação de Panturrilha em Pé', category: 'strength', equipment: 'machine', force: 'push', mechanic: 'isolation', primary_muscles: ['calves'], secondary_muscles: [] },
+  { name: 'Panturrilha no Leg Press', category: 'strength', equipment: 'machine', force: 'push', mechanic: 'isolation', primary_muscles: ['calves'], secondary_muscles: [] },
   { name: 'Hip Thrust com Barra', category: 'strength', equipment: 'barbell', force: 'push', mechanic: 'compound', primary_muscles: ['glutes'], secondary_muscles: ['hamstrings'] },
 
   // ---- Core ----
   { name: 'Prancha Abdominal', category: 'strength', equipment: 'body only', force: 'static', mechanic: 'isolation', primary_muscles: ['abdominals'], secondary_muscles: ['lower back'] },
   { name: 'Abdominal Supra', category: 'strength', equipment: 'body only', force: 'pull', mechanic: 'isolation', primary_muscles: ['abdominals'], secondary_muscles: [] },
+  { name: 'Dead Bug', category: 'strength', equipment: 'body only', force: null, mechanic: 'isolation', primary_muscles: ['abdominals'], secondary_muscles: [] },
   { name: 'Elevação de Pernas Suspenso', category: 'strength', equipment: 'body only', force: 'pull', mechanic: 'compound', primary_muscles: ['abdominals'], secondary_muscles: ['forearms'] },
 
   // ---- Cardio ----

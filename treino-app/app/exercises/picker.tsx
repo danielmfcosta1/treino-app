@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { use$ } from '@legendapp/state/react';
 
-import { exercises$, workoutExercises$ } from '@/src/state/store';
+import { exercises$, workoutExercises$, routineExercises$ } from '@/src/state/store';
 import { newId } from '@/src/lib/ids';
 import { normalizeName } from '@/src/seed/selection';
 import { useColors, type ThemeColors } from '@/src/lib/theme';
@@ -24,7 +24,14 @@ const MUSCLE_LABELS: Record<string, string> = {
 };
 
 export default function ExercisePickerScreen() {
-  const { workoutId, position } = useLocalSearchParams<{ workoutId: string; position: string }>();
+  // O picker serve a dois alvos: adicionar exercício a um TREINO ativo
+  // (workoutId) ou a uma ROTINA-template (routineId). Quem chama passa um dos
+  // dois; o `position` controla a ordem de inserção.
+  const { workoutId, routineId, position } = useLocalSearchParams<{
+    workoutId?: string;
+    routineId?: string;
+    position: string;
+  }>();
   const router = useRouter();
   const c = useColors();
   const styles = makeStyles(c);
@@ -56,14 +63,27 @@ export default function ExercisePickerScreen() {
 
   const pickExercise = (exerciseId: string) => {
     const id = newId();
-    workoutExercises$[id].set({
-      id,
-      workout_id: workoutId,
-      exercise_id: exerciseId,
-      position: parseInt(position ?? '0', 10),
-      notes: null,
-      superset_group: null,
-    } as never);
+    const pos = parseInt(position ?? '0', 10);
+    if (routineId) {
+      routineExercises$[id].set({
+        id,
+        routine_id: routineId,
+        exercise_id: exerciseId,
+        position: pos,
+        target_sets: null,
+        target_reps: null,
+        notes: null,
+      } as never);
+    } else {
+      workoutExercises$[id].set({
+        id,
+        workout_id: workoutId,
+        exercise_id: exerciseId,
+        position: pos,
+        notes: null,
+        superset_group: null,
+      } as never);
+    }
     router.back();
   };
 

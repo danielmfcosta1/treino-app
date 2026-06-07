@@ -25,8 +25,6 @@ import type { ExerciseRow, SetRow, WorkoutExerciseRow, WorkoutRow } from '@/src/
 
 type RowMap<T> = Record<string, T | undefined>;
 
-const EQUIPMENT_OPTIONS = ['Barra', 'Halteres', 'Máquina', 'Smith', 'Cabo', 'Polia', 'Kettlebell'];
-
 // ---------- helpers ----------
 
 function useElapsed(startedAt: string | null) {
@@ -61,9 +59,6 @@ const REASON_LABEL: Record<SuggestionReason, string> = {
 
 function isIsometric(ex?: ExerciseRow): boolean {
   return ex?.force === 'static';
-}
-function showsEquipment(ex?: ExerciseRow): boolean {
-  return !!ex && ex.category === 'strength' && ex.equipment !== 'body only' && ex.force !== 'static';
 }
 
 // ---------- set row (inputs com ESTADO LOCAL → sem bug de cursor) ----------
@@ -295,10 +290,6 @@ function ExerciseCard({ wx, workoutId, exercise, allWorkouts, allWx, allSets, on
         }, null)
     : null;
 
-  const setEquipment = (eq: string) => {
-    workoutExercises$[wx.id].equipment.set(wx.equipment === eq ? null : eq);
-  };
-
   const addSet = () => {
     const lastSet = wxSets[wxSets.length - 1];
     const id = newId();
@@ -346,22 +337,6 @@ function ExerciseCard({ wx, workoutId, exercise, allWorkouts, allWx, allSets, on
 
       {!collapsed && (
         <>
-          {showsEquipment(exercise) && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={ecs.eqRow}>
-              {EQUIPMENT_OPTIONS.map((eq) => {
-                const active = wx.equipment === eq;
-                return (
-                  <TouchableOpacity
-                    key={eq}
-                    style={[ecs.eqChip, active && ecs.eqChipActive]}
-                    onPress={() => setEquipment(eq)}>
-                    <Text style={[ecs.eqChipText, active && ecs.eqChipTextActive]}>{eq}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          )}
-
           {(lastTop || suggestion) && (
             <View style={ecs.intel}>
               {lastTop ? (
@@ -411,19 +386,6 @@ const makeEcs = (c: ThemeColors) => StyleSheet.create({
   summary: { color: c.accent, fontSize: 13 },
   removeBtn: { padding: 4 },
   removeBtnText: { color: c.textFaint, fontSize: 18 },
-  eqRow: { flexGrow: 0, marginVertical: 8 },
-  eqChip: {
-    backgroundColor: c.inputBg,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: c.border,
-  },
-  eqChipActive: { backgroundColor: c.accentBg, borderColor: c.accent },
-  eqChipText: { color: c.textDim, fontSize: 13 },
-  eqChipTextActive: { color: c.accentSoft, fontWeight: '600' },
   intel: {
     backgroundColor: c.accentBg,
     borderRadius: 10,

@@ -6,7 +6,7 @@ import { use$ } from '@legendapp/state/react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { workouts$, routines$ } from '@/src/state/store';
+import { workouts$, routines$, routineExercises$, workoutExercises$ } from '@/src/state/store';
 import { session$ } from '@/src/state/auth';
 import { activeWorkoutId$ } from '@/src/state/workout';
 import { newId } from '@/src/lib/ids';
@@ -65,6 +65,22 @@ export default function HomeScreen() {
       ended_at: null,
       notes: null,
     } as never);
+    // Pré-carrega os exercícios da rotina no treino (template → sessão).
+    const rxMap = routineExercises$.get() ?? {};
+    Object.values(rxMap)
+      .filter((rx) => !!rx && rx.routine_id === routineId && !rx.deleted)
+      .sort((a, b) => a.position - b.position)
+      .forEach((rx) => {
+        const wxId = newId();
+        workoutExercises$[wxId].set({
+          id: wxId,
+          workout_id: id,
+          exercise_id: rx.exercise_id,
+          position: rx.position,
+          notes: null,
+          superset_group: null,
+        } as never);
+      });
     activeWorkoutId$.set(id);
     router.push(`/workout/${id}`);
   };

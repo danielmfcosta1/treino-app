@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { use$ } from '@legendapp/state/react';
 
 import { routines$, routineExercises$ } from '@/src/state/store';
@@ -17,6 +18,7 @@ import { newId } from '@/src/lib/ids';
 import { useColors, type ThemeColors } from '@/src/lib/theme';
 
 export default function RoutinesScreen() {
+  const router = useRouter();
   const c = useColors();
   const styles = makeStyles(c);
   const routinesMap = use$(routines$);
@@ -83,11 +85,15 @@ export default function RoutinesScreen() {
         }
         renderItem={({ item: r }) => (
           <View style={styles.card}>
-            <View style={styles.cardBody}>
+            <TouchableOpacity
+              style={styles.cardBody}
+              onPress={() => router.push(`/routines/${r.id}`)}>
               <Text style={styles.cardName}>{r.name}</Text>
               {r.notes ? <Text style={styles.cardNotes}>{r.notes}</Text> : null}
-              <Text style={styles.cardCount}>{exerciseCount(r.id)} exercícios</Text>
-            </View>
+              <Text style={styles.cardCount}>
+                {exerciseCount(r.id)} exercícios · toque para editar
+              </Text>
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.deleteBtn}
               onPress={() => deleteRoutine(r.id, r.name)}>
