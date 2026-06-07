@@ -82,7 +82,8 @@ export default function HomeScreen() {
     return d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
   };
 
-  const firstName = session?.user?.email?.split('@')[0] ?? 'você';
+  const displayName = (session?.user?.user_metadata?.display_name as string | undefined)?.trim();
+  const firstName = displayName || session?.user?.email?.split('@')[0] || 'você';
 
   return (
     <SafeAreaView className="flex-1 bg-background">

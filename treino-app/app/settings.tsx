@@ -1,5 +1,14 @@
-import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { use$ } from '@legendapp/state/react';
@@ -7,6 +16,14 @@ import { use$ } from '@legendapp/state/react';
 import { signOut, session$ } from '@/src/state/auth';
 import { defaultRestSeconds$ } from '@/src/state/restTimer';
 import { appearance$, setAppearance, type AppearancePref } from '@/src/state/appearance';
+import {
+  ageFromISO,
+  brToISO,
+  isoToBR,
+  maskBR,
+  readProfile,
+  updateProfile,
+} from '@/src/state/profile';
 import { useColors, type ThemeColors } from '@/src/lib/theme';
 import {
   workouts$,
@@ -40,6 +57,31 @@ export default function SettingsScreen() {
   const restSecs = use$(defaultRestSeconds$);
   const appearance = use$(appearance$);
   const [busy, setBusy] = useState(false);
+
+  // Perfil (nome + nascimento) — semeado do user_metadata, salvo sob demanda.
+  const profile = readProfile(session);
+  const [name, setName] = useState(profile.displayName);
+  const [birth, setBirth] = useState(isoToBR(profile.birthDate));
+  const [savingProfile, setSavingProfile] = useState(false);
+  useEffect(() => {
+    setName(profile.displayName);
+    setBirth(isoToBR(profile.birthDate));
+  }, [profile.displayName, profile.birthDate]);
+
+  const dirty = name !== profile.displayName || birth !== isoToBR(profile.birthDate);
+  const birthInvalid = birth.length > 0 && brToISO(birth) === null;
+  const age = ageFromISO(brToISO(birth));
+
+  const saveProfile = async () => {
+    if (birthInvalid) {
+      Alert.alert('Data inválida', 'Use o formato DD/MM/AAAA.');
+      return;
+    }
+    setSavingProfile(true);
+    const err = await updateProfile({ displayName: name, birthDate: brToISO(birth) });
+    setSavingProfile(false);
+    if (err) Alert.alert('Erro', err);
+  };
 
   const activeArr = <T extends { deleted: boolean }>(m: Record<string, T | undefined>): T[] =>
     Object.values(m).filter((x): x is T => !!x && !x.deleted);
@@ -100,11 +142,50 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={s.content}>
-        {/* Conta */}
+        {/* Perfil */}
         <View style={s.section}>
-          <Text style={s.sectionTitle}>Conta</Text>
+          <Text style={s.sectionTitle}>Perfil</Text>
           <View style={s.card}>
-            <Text style={s.label}>Logado como</Text>
+            <Text style={s.fieldLabel}>Nome (como o app te chama)</Text>
+            <TextInput
+              style={s.input}
+              value={name}
+              onChangeText={setName}
+              placeholder="Seu nome"
+              placeholderTextColor={c.textFaint}
+              autoCapitalize="words"
+            />
+
+            <Text style={[s.fieldLabel, { marginTop: 14 }]}>Data de nascimento</Text>
+            <TextInput
+              style={[s.input, birthInvalid && s.inputError]}
+              value={birth}
+              onChangeText={(t) => setBirth(maskBR(t))}
+              placeholder="DD/MM/AAAA"
+              placeholderTextColor={c.textFaint}
+              keyboardType="number-pad"
+              maxLength={10}
+            />
+            {birthInvalid ? (
+              <Text style={s.hintError}>Data inválida — use DD/MM/AAAA.</Text>
+            ) : age != null ? (
+              <Text style={s.hint}>{age} anos</Text>
+            ) : null}
+
+            {dirty ? (
+              <TouchableOpacity
+                style={[s.saveBtn, savingProfile && { opacity: 0.6 }]}
+                onPress={saveProfile}
+                disabled={savingProfile}>
+                {savingProfile ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={s.saveBtnText}>Salvar perfil</Text>
+                )}
+              </TouchableOpacity>
+            ) : null}
+
+            <Text style={[s.label, { marginTop: 14 }]}>Logado como</Text>
             <Text style={s.value}>{session?.user?.email ?? '—'}</Text>
           </View>
         </View>
@@ -195,6 +276,28 @@ const makeStyles = (c: ThemeColors) =>
     },
     label: { color: c.textFaint, fontSize: 12 },
     value: { color: c.text, fontSize: 16, marginTop: 4 },
+    fieldLabel: { color: c.textDim, fontSize: 13, marginBottom: 6 },
+    input: {
+      backgroundColor: c.inputBg,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 16,
+      color: c.text,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    inputError: { borderColor: c.danger },
+    hint: { color: c.textDim, fontSize: 12, marginTop: 6 },
+    hintError: { color: c.danger, fontSize: 12, marginTop: 6 },
+    saveBtn: {
+      backgroundColor: c.accent,
+      borderRadius: 10,
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginTop: 14,
+    },
+    saveBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
     presetRow: { flexDirection: 'row', gap: 10 },
     preset: {
       flex: 1,
